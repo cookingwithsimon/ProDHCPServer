@@ -32,6 +32,14 @@ jobs:
       - name: Windows integration tests (sockets, ARP, firewall; no adapter changes)
         run: dotnet test tests/ProDHCPServer.Windows.Tests --no-build --logger "trx;LogFileName=windows.trx" --results-directory TestResults
 
+      - name: List integration test results
+        if: always()
+        shell: pwsh
+        run: |
+          [xml]$trx = Get-Content TestResults/windows.trx
+          $trx.TestRun.Results.UnitTestResult | ForEach-Object { "{0,-8} {1,-12} {2}" -f $_.outcome, $_.duration, $_.testName }
+          $trx.TestRun.Results.UnitTestResult | Where-Object { $_.Output.StdOut } | ForEach-Object { "--- $($_.testName)"; $_.Output.StdOut }
+
       - name: Publish single-file exe
         shell: pwsh
         run: |

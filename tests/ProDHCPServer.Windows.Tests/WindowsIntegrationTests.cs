@@ -28,7 +28,7 @@ public sealed class AdminFactAttribute : FactAttribute
 }
 
 [SupportedOSPlatform("windows")]
-public class WindowsIntegrationTests
+public class WindowsIntegrationTests(Xunit.Abstractions.ITestOutputHelper output)
 {
     /// <summary>The machine's main IPv4 adapter: up, has a gateway, not loopback.</summary>
     private static (AdapterInfo Adapter, AddressAssignment Address) PrimaryAdapter()
@@ -108,6 +108,7 @@ public class WindowsIntegrationTests
         }
         catch (TransportBindException ex) when (ex.Message.Contains("in use"))
         {
+            output.WriteLine($"NOT RUN: {ex.Message}");
             return; // Something on the runner already owns port 67; nothing to test here.
         }
 
@@ -130,6 +131,7 @@ public class WindowsIntegrationTests
             if (p.Op == BootOp.Reply && p.TransactionId == 0xC0FFEE) reply = p;
         }
 
+        output.WriteLine($"INFORM answered on {primary.Name} (index {primary.Index}) {address}: {reply.Summary()}");
         Assert.Equal(DhcpMessageType.Ack, reply.MessageType);
         Assert.Equal(config.ServerIp, reply.ServerIdentifier);
         Assert.Null(reply.GetOption(DhcpOptionCode.LeaseTime));
