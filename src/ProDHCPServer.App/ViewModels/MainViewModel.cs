@@ -43,9 +43,11 @@ public sealed partial class MainViewModel : ObservableObject, IAsyncDisposable
         Steps = new ObservableCollection<StepViewModel>(Enum.GetValues<StepId>().Select(id => new StepViewModel(id)));
 
         foreach (var entry in log.Snapshot().TakeLast(MaxLogRows)) LogRows.Add(new LogItemViewModel(entry));
+        if (LogRows.LastOrDefault() is { } last) LatestLogText = $"{last.Entry.Time:HH:mm:ss}  {last.Message}";
         log.Added += entry => _dispatcher.BeginInvoke(() =>
         {
             LogRows.Add(new LogItemViewModel(entry));
+            LatestLogText = $"{entry.Time:HH:mm:ss}  {entry.Message}";
             while (LogRows.Count > MaxLogRows) LogRows.RemoveAt(0);
         });
 
@@ -98,6 +100,7 @@ public sealed partial class MainViewModel : ObservableObject, IAsyncDisposable
     [ObservableProperty] private string? _otherServerDetail;
     [ObservableProperty] private string? _conflictText;
     [ObservableProperty] private bool _settingsOpen;
+    [ObservableProperty] private string _latestLogText = "";
 
     private AdapterInfo? _conflictingAdapter;
 

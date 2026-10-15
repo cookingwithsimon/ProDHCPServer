@@ -8,10 +8,11 @@
         xmlns:status="clr-namespace:ProDHCPServer.Core.Status;assembly=ProDHCPServer.Core"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type=vm:MainViewModel}"
-        Title="ProDHCPServer" Width="1320" Height="860" MinWidth="1020" MinHeight="660"
+        Title="ProDHCPServer" Width="1320" Height="860" MinWidth="900" MinHeight="600"
         WindowStartupLocation="CenterScreen"
         Background="{DynamicResource WindowBg}"
-        Closing="OnClosing">
+        Closing="OnClosing"
+        SourceInitialized="OnSourceInitialized">
     <Window.InputBindings>
         <KeyBinding Key="F5" Command="{Binding RefreshAdaptersCommand}" />
     </Window.InputBindings>
@@ -180,14 +181,14 @@
                     <ItemsControl ItemsSource="{Binding Steps}" AutomationProperties.Name="Status checks">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate DataType="{x:Type vm:StepViewModel}">
-                                <Border Padding="10,8" Margin="0,0,0,2" CornerRadius="8">
+                                <Border Padding="8,6" Margin="0,0,0,2" CornerRadius="8">
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto" />
                                             <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="Auto" />
                                         </Grid.ColumnDefinitions>
-                                        <Grid Width="36" Height="36" VerticalAlignment="Top" Margin="0,2,14,0">
+                                        <Grid Width="32" Height="32" VerticalAlignment="Top" Margin="0,2,12,0">
                                             <Ellipse Fill="{Binding State, Converter={StaticResource StateBrush}}" />
                                             <TextBlock Text="{Binding State, Converter={StaticResource StateGlyph}}" Foreground="White" FontSize="18" FontWeight="Bold"
                                                        HorizontalAlignment="Center" VerticalAlignment="Center" />
@@ -206,9 +207,9 @@
                                             </TextBlock>
                                         </Grid>
                                         <StackPanel Grid.Column="1">
-                                            <TextBlock Text="{Binding Title}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextMuted}" />
-                                            <TextBlock Text="{Binding Reason}" FontSize="17" Style="{StaticResource Primary}" Margin="0,1,0,0" />
-                                            <TextBlock Text="{Binding Action}" FontSize="14" Margin="0,3,0,0" FontStyle="Italic"
+                                            <TextBlock Text="{Binding Title}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextMuted}" />
+                                            <TextBlock Text="{Binding Reason}" FontSize="16" Style="{StaticResource Primary}" Margin="0,1,0,0" />
+                                            <TextBlock Text="{Binding Action}" FontSize="13" Margin="0,2,0,0" FontStyle="Italic"
                                                        Foreground="{Binding State, Converter={StaticResource StateBrush}}" TextWrapping="Wrap"
                                                        Visibility="{Binding Action, Converter={StaticResource VisibleWhen}}" />
                                             <Expander Header="Details" Margin="0,4,0,0" FontSize="12" Foreground="{DynamicResource TextMuted}"
@@ -367,9 +368,12 @@
         </Grid>
 
         <!-- ===== Session log ===== -->
-        <Expander Grid.Row="4" Margin="0,12,0,0" IsExpanded="True" Foreground="{DynamicResource TextSecondary}">
+        <Expander x:Name="LogExpander" Grid.Row="4" Margin="0,12,0,0" Foreground="{DynamicResource TextSecondary}">
             <Expander.Header>
-                <TextBlock Text="Session log" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondary}" />
+                <TextBlock TextTrimming="CharacterEllipsis">
+                    <Run Text="Session log" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondary}" />
+                    <Run Text="   " /><Run Text="{Binding LatestLogText, Mode=OneWay}" Foreground="{DynamicResource TextMuted}" />
+                </TextBlock>
             </Expander.Header>
             <Grid Height="170" Margin="0,6,0,0">
                 <Grid.ColumnDefinitions>
@@ -397,7 +401,7 @@
                     </ListBox.ItemTemplate>
                 </ListBox>
                 <TextBox Grid.Column="2" Style="{StaticResource MonoBox}" MaxHeight="10000"
-                         Text="{Binding SelectedItem.Entry, ElementName=LogList, Mode=OneWay, Converter={x:Static local:LogDetailConverter.Instance}}" />
+                         Text="{Binding SelectedItem.Entry, ElementName=LogList, Mode=OneWay, Converter={x:Static local:LogDetailConverter.Instance}, TargetNullValue='Select a log line to see its details.', FallbackValue='Select a log line to see its details.'}" />
             </Grid>
         </Expander>
     </Grid>

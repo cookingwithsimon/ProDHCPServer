@@ -29,6 +29,22 @@ public partial class MainWindow : Window
         Close();
     }
 
+    /// <summary>
+    /// Field laptops are often 1366x768 or 1080p at 150% scaling: never open bigger than the screen,
+    /// and keep the log tucked away when space is tight so all eight status steps stay visible.
+    /// </summary>
+    private void OnSourceInitialized(object? sender, EventArgs e)
+    {
+        var area = SystemParameters.WorkArea;
+        if (Width > area.Width || Height > area.Height)
+        {
+            Width = Math.Min(Width, area.Width);
+            Height = Math.Min(Height, area.Height);
+            WindowState = WindowState.Maximized;
+        }
+        LogExpander.IsExpanded = area.Height >= 1000;
+    }
+
     private void OnLogLoaded(object sender, RoutedEventArgs e)
     {
         // Follow new log lines unless the user has scrolled up to read something.
