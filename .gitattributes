@@ -1,0 +1,13 @@
+# Normalise line endings in the repo; Windows checkouts get CRLF where tools expect it.
+* text=auto
+
+*.sln     text eol=crlf
+*.ps1     text eol=crlf
+*.sh      text eol=lf
+*.py      text eol=lf
+
+*.ico     binary
+*.png     binary
+*.gz      binary
+*.exe     binary
+*.dll     binary

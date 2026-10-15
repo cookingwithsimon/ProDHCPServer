@@ -1,0 +1,15 @@
+name: Feature idea
+description: Something that would make field work quicker or easier.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: situation
+    attributes:
+      label: The situation on site
+      description: What were you trying to do, and with what equipment?
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would help
