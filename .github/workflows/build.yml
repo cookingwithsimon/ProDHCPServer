@@ -1,0 +1,64 @@
+name: Build and test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore ProDHCPServer.sln
+
+      - name: Build
+        run: dotnet build ProDHCPServer.sln -c Debug --no-restore
+
+      - name: Core tests (DHCP, backup/restore, status rules)
+        run: dotnet test tests/ProDHCPServer.Core.Tests --no-build --logger "trx;LogFileName=core.trx" --results-directory TestResults
+
+      - name: Windows integration tests (sockets, ARP, firewall; no adapter changes)
+        run: dotnet test tests/ProDHCPServer.Windows.Tests --no-build --logger "trx;LogFileName=windows.trx" --results-directory TestResults
+
+      - name: Publish single-file exe
+        shell: pwsh
+        run: |
+          $version = "0.1.${{ github.run_number }}"
+          dotnet publish src/ProDHCPServer.App -c Release -r win-x64 -p:Version=$version -o publish
+          Get-ChildItem publish
+
+      - name: Smoke test (launch, screenshot light and dark, close)
+        shell: pwsh
+        run: tools/smoke-test.ps1 -Exe publish/ProDHCPServer.exe -OutDir screenshots
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ProDHCPServer-win-x64
+          path: publish/ProDHCPServer.exe
+          if-no-files-found: error
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: screenshots
+          path: screenshots/
+          if-no-files-found: ignore
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: TestResults/
+          if-no-files-found: ignore

@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>ProDHCPServer.Core</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\oui.txt.gz" LogicalName="ProDHCPServer.Core.oui.txt.gz" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="ProDHCPServer.Core.Tests" />
+  </ItemGroup>
+</Project>
