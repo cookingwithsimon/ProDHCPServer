@@ -1,0 +1,40 @@
+name: Problem on site
+description: Something went wrong while using ProDHCPServer with real equipment.
+labels: [bug]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you expected, and what you saw instead. Screenshots of the status panel help.
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Device(s) connected
+      placeholder: e.g. Q-SYS Core 110f direct, or 3 cameras behind a Netgear GS108
+  - type: input
+    id: version
+    attributes:
+      label: App version
+      description: Shown in the title bar or Settings. The CI run number also works.
+  - type: input
+    id: windows
+    attributes:
+      label: Windows version and adapter
+      placeholder: e.g. Windows 11 24H2, USB-C Realtek adapter
+  - type: dropdown
+    id: adapter-restored
+    attributes:
+      label: Were your adapter settings put back afterwards?
+      options:
+        - "Yes"
+        - "No, I had to fix them by hand"
+        - "Not sure"
+  - type: textarea
+    id: log
+    attributes:
+      label: Session log
+      description: Paste or attach the exported session log if you have one.
+      render: text
