@@ -286,4 +286,68 @@ public class StatusChainTests
         Assert.All(steps, s => Assert.Equal(StepState.Good, s.State));
         Assert.Equal(StepId.WebUi, StatusChain.Headline(steps).Id);
     }
+
+    private static readonly AdapterDriver OldRealtek = new("Microsoft", "11.4.211.2022", new DateOnly(2015, 9, 26), "usb\\vid_0bda&pid_8153");
+
+    [Fact]
+    public void Receive_stall_with_a_bound_device_is_red_and_says_to_replug()
+    {
+        var s = Running(x => x with { ReceiveStalledFor = TimeSpan.FromSeconds(25), Leases = [BoundLease()] });
+        var link = Step(s, StepId.Link);
+        Assert.Equal(StepState.Bad, link.State);
+        Assert.Contains("received nothing for 25 s", link.Reason);
+        Assert.Contains("plug it back in", link.Action);
+    }
+
+    [Fact]
+    public void Receive_stall_without_a_device_is_amber_and_allows_a_silent_device()
+    {
+        var link = Step(Running(x => x with { ReceiveStalledFor = TimeSpan.FromSeconds(21) }), StepId.Link);
+        Assert.Equal(StepState.Warning, link.State);
+        Assert.Contains("isn't sending anything", link.Reason);
+    }
+
+    [Fact]
+    public void Ping_failure_during_a_stall_blames_the_adapter_not_the_device()
+    {
+        var s = Running(x => x with
+        {
+            ReceiveStalledFor = TimeSpan.FromSeconds(30),
+            Leases = [BoundLease()],
+            Ping = new ProbeResult(T0, false),
+            ConsecutivePingFailures = 12,
+        });
+        var ping = Step(s, StepId.Ping);
+        Assert.Contains("nothing at all is being received", ping.Reason);
+    }
+
+    [Fact]
+    public void Old_realtek_usb_driver_is_flagged_with_how_to_update()
+    {
+        var s = Running(x => x with { Adapter = Eth(a => a with { Description = "Realtek USB GbE Family Controller", Driver = OldRealtek }) });
+        var step = Step(s, StepId.Adapter);
+        Assert.Equal(StepState.Warning, step.State);
+        Assert.Contains("old driver", step.Reason);
+        Assert.Contains("Optional updates", step.Action);
+    }
+
+    [Fact]
+    public void Old_realtek_warning_clears_once_the_device_answers()
+    {
+        var s = Running(x => x with
+        {
+            Adapter = Eth(a => a with { Driver = OldRealtek }),
+            Leases = [BoundLease()],
+            Ping = new ProbeResult(T0, true, 1),
+        });
+        Assert.Equal(StepState.Good, Step(s, StepId.Adapter).State);
+    }
+
+    [Fact]
+    public void Current_realtek_driver_is_not_flagged()
+    {
+        var a = Eth(a => a with { Driver = new("Realtek", "1153.22.20.113", new DateOnly(2026, 1, 13), "usb\\vid_0bda&pid_8153") });
+        Assert.Null(AdapterRules.KnownDriverProblem(a));
+        Assert.NotNull(AdapterRules.KnownDriverProblem(a with { Driver = OldRealtek }));
+    }
 }

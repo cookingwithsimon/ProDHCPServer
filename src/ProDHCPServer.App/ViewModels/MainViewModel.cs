@@ -249,6 +249,7 @@ public sealed partial class MainViewModel : ObservableObject, IAsyncDisposable
             SessionActive = _controller.IsActive,
             SessionStartedAt = _controller.StartedAt,
             LinkUpSince = _controller.LinkUpSince,
+            ReceiveStalledFor = _controller.ReceiveStalledFor,
             ServerListening = _controller.Listening,
             ListeningSince = _controller.ListeningSince,
             ServerError = _controller.ServerError,

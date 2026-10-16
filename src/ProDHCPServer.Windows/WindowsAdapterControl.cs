@@ -20,7 +20,9 @@ public sealed class WindowsAdapterControl : IAdapterControl
     private const string NetworkClass = @"SYSTEM\CurrentControlSet\Control\Network\{4D36E972-E325-11CE-BFC1-08002BE10318}\";
     private static readonly string[] AlreadyDone = ["already enabled", "already configured", "already exists"];
 
+    private const string AdapterClass = @"SYSTEM\CurrentControlSet\Control\Class\{4d36e972-e325-11ce-bfc1-08002be10318}";
     private readonly Dictionary<string, (long Speed, bool? Duplex)> _duplexCache = [];
+    private readonly Dictionary<string, AdapterDriver?> _driverCache = [];
 
     public IReadOnlyList<AdapterInfo> ListAdapters()
     {
@@ -67,6 +69,14 @@ public sealed class WindowsAdapterControl : IAdapterControl
         }
 
         long speed = up ? Math.Max(0, ni.Speed) : 0;
+        long? received = null, sent = null;
+        try
+        {
+            var stats = ni.GetIPStatistics();
+            received = stats.BytesReceived;
+            sent = stats.BytesSent;
+        }
+        catch (NetworkInformationException) { /* counters not available for this adapter */ }
         return new AdapterInfo
         {
             Id = ni.Id,
@@ -85,7 +95,42 @@ public sealed class WindowsAdapterControl : IAdapterControl
             Gateways = props.GatewayAddresses.Select(g => g.Address).Where(a => a.AddressFamily == AddressFamily.InterNetwork && !IPv4.IsZero(a)).ToList(),
             DnsServers = props.DnsAddresses.Where(a => a.AddressFamily == AddressFamily.InterNetwork).ToList(),
             DhcpServer = SafeDhcpServers(props).FirstOrDefault(),
+            BytesReceived = received,
+            BytesSent = sent,
+            Driver = Driver(ni.Id),
         };
+    }
+
+    /// <summary>Driver provider, version, date and hardware ID from the network class key. Cached per adapter.</summary>
+    private AdapterDriver? Driver(string id)
+    {
+        lock (_driverCache)
+        {
+            if (_driverCache.TryGetValue(id, out var cached)) return cached;
+        }
+        AdapterDriver? driver = null;
+        try
+        {
+            using var cls = Registry.LocalMachine.OpenSubKey(AdapterClass);
+            foreach (var name in cls?.GetSubKeyNames() ?? [])
+            {
+                if (!name.All(char.IsAsciiDigit)) continue;
+                using var key = cls!.OpenSubKey(name);
+                if (key?.GetValue("NetCfgInstanceId") is not string instance || !SameId(instance, id)) continue;
+                DateOnly? date = key.GetValue("DriverDate") is string text
+                    && DateOnly.TryParseExact(text, ["M-d-yyyy", "MM-dd-yyyy"], System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var parsed)
+                    ? parsed : null;
+                driver = new AdapterDriver(key.GetValue("ProviderName") as string, key.GetValue("DriverVersion") as string, date,
+                    key.GetValue("MatchingDeviceId") as string);
+                break;
+            }
+        }
+        catch (Exception ex) when (ex is System.Security.SecurityException or UnauthorizedAccessException or IOException)
+        {
+            driver = null;
+        }
+        lock (_driverCache) _driverCache[id] = driver;
+        return driver;
     }
 
     private static DuplicateAddressDetectionState? SafeDad(UnicastIPAddressInformation ua)
