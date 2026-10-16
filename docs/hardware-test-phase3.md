@@ -7,7 +7,7 @@ About 30 minutes. You need:
 - One device you can set to a **static IP on a different subnet**. For example, set the NAV SD to 192.168.1.50 /24 in its web page, or use anything still on a factory static address such as an Extron switcher at 192.168.254.254.
 - A managed switch with LLDP or CDP turned on, if you have one, for section 5.
 
-Download `ProDHCPServer.exe` from the latest successful **Build and test** run on the Phase 3 pull request (Actions tab → run → Artifacts → `ProDHCPServer-win-x64`). Click **More info → Run anyway** on the SmartScreen warning.
+Download `ProDHCPServer.exe` from the latest successful **Build and test** run on `main` (Actions tab → run → Artifacts → `ProDHCPServer-win-x64`). Click **More info → Run anyway** on the SmartScreen warning.
 
 Tick each box. If something fails, use **Export log…** and send me the file.
 
@@ -54,3 +54,6 @@ Only if you're happy to install [Npcap](https://npcap.com/#download) on the test
 ## 6. Phases 1 and 2 still work
 
 - [ ] Quick repeat: one device straight on the cable, Start, lease, ping graph and WebUI green, **Open WebUI**, **Export log…**, Stop, adapter back to its original settings.
+
+## Results
+Passed 2026-10-16, every item except the PJLink one in section 4, which wasn't tried because no PJLink projector or display was on hand. Run that item the next time one is available.
