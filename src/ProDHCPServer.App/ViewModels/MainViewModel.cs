@@ -104,7 +104,7 @@ public sealed partial class MainViewModel : ObservableObject, IAsyncDisposable
 
     private AdapterInfo? _conflictingAdapter;
 
-    public string StartStopText => IsBusy ? (IsRunning ? "Stopping…" : "Starting…") : IsRunning ? "Stop" : "Start";
+    public string StartStopText => IsBusy ? (IsRunning ? "Stopping…" : "Starting…") : IsRunning ? "Stop server" : "Start server";
     public bool SettingsEditable => !IsRunning;
 
     public string RecoveryText => PendingRecovery is { } r
@@ -448,10 +448,14 @@ public sealed partial class MainViewModel : ObservableObject, IAsyncDisposable
     [RelayCommand]
     private void ServeAnyway()
     {
-        var answer = MessageBox.Show(
-            "Another DHCP server is already on this network. Serving as well can hand out wrong addresses to other people's equipment.\n\nOnly continue if you are sure you are connected just to your own devices.\n\nServe anyway?",
-            "Serve DHCP anyway?", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No);
-        if (answer == MessageBoxResult.Yes) _controller.OverrideOtherServer();
+        var other = _controller.OtherServer?.ServerId.ToString() ?? "the other server";
+        var confirmed = ConfirmDialog.Show(
+            Application.Current.MainWindow,
+            title: $"Serve DHCP alongside {other}?",
+            message: $"{other} is already handing out addresses on this network. Serving as well can give wrong addresses to other people's equipment. " +
+                     "Only do this if you are connected just to your own devices.",
+            confirmText: "Serve anyway");
+        if (confirmed) _controller.OverrideOtherServer();
     }
 
     [RelayCommand]
@@ -518,6 +522,13 @@ public sealed partial class MainViewModel : ObservableObject, IAsyncDisposable
 
     [RelayCommand]
     private void ToggleSettings() => SettingsOpen = !SettingsOpen;
+
+    [RelayCommand]
+    private void CloseSettings() => SettingsOpen = false;
+
+    /// <summary>Checks the settings form when a field loses focus, so problems show before Save rather than while typing.</summary>
+    [RelayCommand]
+    private void ValidateSettings() => Settings.TryBuild(_settings);
 
     [RelayCommand]
     private void SaveSettingsForm()

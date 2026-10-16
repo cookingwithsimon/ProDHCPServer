@@ -19,16 +19,24 @@ function Save-Screen([string] $path) {
     $g.Dispose(); $bmp.Dispose()
 }
 
-foreach ($theme in @("Dark", "Light")) {
+# Each shot: theme, file name, extra arguments. The last one opens the settings slide-over.
+$shots = @(
+    @{ Theme = "Dark"; Name = "main-dark"; Args = @() },
+    @{ Theme = "Light"; Name = "main-light"; Args = @() },
+    @{ Theme = "Dark"; Name = "settings-dark"; Args = @("--open-settings") }
+)
+foreach ($shot in $shots) {
+    $theme = $shot.Theme
     @{ Theme = $theme } | ConvertTo-Json | Set-Content -Path (Join-Path $settingsDir "settings.json") -Encoding utf8
-    $p = Start-Process -FilePath $Exe -PassThru
+    if ($shot.Args.Count -gt 0) { $p = Start-Process -FilePath $Exe -ArgumentList $shot.Args -PassThru }
+    else { $p = Start-Process -FilePath $Exe -PassThru }
     Start-Sleep -Seconds 15
     if ($p.HasExited) {
         Get-ChildItem (Join-Path $env:ProgramData "ProDHCPServer") -Filter "crash-*.txt" -ErrorAction SilentlyContinue | ForEach-Object { Get-Content $_.FullName }
-        throw "ProDHCPServer exited during startup ($theme theme) with code $($p.ExitCode)."
+        throw "ProDHCPServer exited during startup ($($shot.Name)) with code $($p.ExitCode)."
     }
-    Save-Screen (Join-Path $OutDir "main-$($theme.ToLower()).png")
-    Write-Host "$theme theme: running, screenshot saved. Main window title: '$($p.MainWindowTitle)'"
+    Save-Screen (Join-Path $OutDir "$($shot.Name).png")
+    Write-Host "$($shot.Name): running, screenshot saved. Main window title: '$($p.MainWindowTitle)'"
     Stop-Process -Id $p.Id -Force
     Start-Sleep -Seconds 2
 }

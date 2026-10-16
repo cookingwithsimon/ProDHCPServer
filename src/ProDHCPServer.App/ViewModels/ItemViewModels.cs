@@ -115,7 +115,7 @@ public sealed class LogItemViewModel(LogEntry entry)
     public LogEntry Entry { get; } = entry;
     public string Time => Entry.Time.ToString("HH:mm:ss");
     public LogSeverity Severity => Entry.Severity;
-    public string Category => Entry.Category.ToString().ToUpperInvariant();
+    public string Category => Entry.Category == LogCategory.Dhcp ? "DHCP" : Entry.Category.ToString();
     public string Message => Entry.Message;
     public string? Detail => Entry.Detail;
     public bool HasDetail => !string.IsNullOrEmpty(Entry.Detail);

@@ -26,6 +26,15 @@ public sealed partial class SettingsViewModel : ObservableObject
     [ObservableProperty] private string _theme = "System";
     [ObservableProperty] private string _errors = "";
 
+    // Any edit clears the error text straight away; it is checked again when the field loses focus or on Save.
+    partial void OnServerIpChanged(string value) => Errors = "";
+    partial void OnPrefixChanged(PrefixOption value) => Errors = "";
+    partial void OnPoolStartChanged(string value) => Errors = "";
+    partial void OnPoolEndChanged(string value) => Errors = "";
+    partial void OnLeaseMinutesChanged(string value) => Errors = "";
+    partial void OnRouterChanged(string value) => Errors = "";
+    partial void OnDnsServersChanged(string value) => Errors = "";
+
     public void Load(AppSettings s)
     {
         ServerIp = s.ServerIp;
