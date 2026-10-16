@@ -5,6 +5,7 @@ using System.Windows.Threading;
 using ProDHCPServer.App.ViewModels;
 using ProDHCPServer.Core;
 using ProDHCPServer.Core.Adapters;
+using ProDHCPServer.Core.Profiles;
 using ProDHCPServer.Windows;
 
 namespace ProDHCPServer.App;
@@ -24,7 +25,8 @@ public partial class App : Application
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
-        var settingsStore = new SettingsStore(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ProDHCPServer", "settings.json"));
+        var userFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ProDHCPServer");
+        var settingsStore = new SettingsStore(Path.Combine(userFolder, "settings.json"));
         Theme.Apply(settingsStore.Load().Theme);
 
         if (!Elevation.IsAdministrator())
@@ -63,11 +65,13 @@ public partial class App : Application
         };
         SessionEnding += (_, _) => _controller.EmergencyRestore();
 
-        var vm = new MainViewModel(adapters, sessions, _controller, _log, settingsStore, Dispatcher);
+        var profiles = new ProfileLibrary(Path.Combine(userFolder, "profiles.json"));
+        var vm = new MainViewModel(adapters, sessions, _controller, _log, settingsStore, profiles, Dispatcher);
         _controller.DhcpEvent += vm.OnDhcpEvent;
         // Used by tools/smoke-test.ps1 to screenshot the settings slide-over.
         if (e.Args.Contains("--open-settings")) vm.SettingsOpen = true;
         var window = new MainWindow { DataContext = vm };
+        vm.Settings.AttachDialogs(new WindowDialogs(window));
         window.Closed += (_, _) => Shutdown();
         MainWindow = window;
         window.Show();

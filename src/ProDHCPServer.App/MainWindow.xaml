@@ -38,11 +38,13 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <!-- ===== Top bar: adapter picker, refresh, settings, Start/Stop ===== -->
+            <!-- ===== Top bar: adapter picker, profile picker, refresh, settings, Start/Stop ===== -->
             <Grid Grid.Row="0" Margin="0,0,0,16">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
@@ -78,12 +80,18 @@
                     </ComboBox.ItemTemplate>
                 </ComboBox>
 
-                <Button Grid.Column="2" Style="{StaticResource IconButton}" Content="&#xE72C;" Width="56" Height="56" Margin="16,0,0,0"
-                        Command="{Binding RefreshAdaptersCommand}" ToolTip="Refresh adapters (F5)" AutomationProperties.Name="Refresh adapters" />
-                <Button x:Name="SettingsButton" Grid.Column="3" Style="{StaticResource IconButton}" Content="&#xE713;" Width="56" Height="56" Margin="8,0,0,0"
-                        Command="{Binding ToggleSettingsCommand}" ToolTip="Open server settings (Ctrl+,)" AutomationProperties.Name="Open server settings" />
+                <Label Grid.Column="2" Content="P_rofile" Target="{Binding ElementName=ProfilePicker}" VerticalAlignment="Center" Padding="0" Margin="24,0,16,0"
+                       FontSize="{StaticResource TextBody}" FontWeight="Medium" Foreground="{DynamicResource TextSecondary}" />
+                <ComboBox x:Name="ProfilePicker" Grid.Column="3" Width="220" MinHeight="56" FontSize="{StaticResource TextBody}" VerticalContentAlignment="Center"
+                          ItemsSource="{Binding Settings.Profiles}" SelectedItem="{Binding Settings.SelectedProfile}" DisplayMemberPath="Display"
+                          IsEnabled="{Binding SettingsEditable}" ToolTip="The saved settings Start uses: subnet, pool, lease time and DHCP options" />
 
-                <Button Grid.Column="4" MinWidth="200" Height="56" Margin="16,0,0,0" Padding="28,0"
+                <Button Grid.Column="4" Style="{StaticResource IconButton}" Content="&#xE72C;" Width="56" Height="56" Margin="16,0,0,0"
+                        Command="{Binding RefreshAdaptersCommand}" ToolTip="Refresh adapters (F5)" AutomationProperties.Name="Refresh adapters" />
+                <Button x:Name="SettingsButton" Grid.Column="5" Style="{StaticResource IconButton}" Content="&#xE713;" Width="56" Height="56" Margin="8,0,0,0"
+                        Command="{Binding ToggleSettingsCommand}" ToolTip="Edit profiles and settings (Ctrl+,)" AutomationProperties.Name="Edit profiles and settings" />
+
+                <Button Grid.Column="6" MinWidth="200" Height="56" Margin="16,0,0,0" Padding="28,0"
                         Command="{Binding StartStopCommand}" AutomationProperties.Name="{Binding StartStopText}">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock FontFamily="{StaticResource IconFont}" FontSize="{StaticResource TextBody}" VerticalAlignment="Center" Margin="0,0,12,0">
@@ -308,7 +316,7 @@
                                 </Grid>
                                 <Grid Margin="0,16,0,0" TextElement.FontSize="{StaticResource TextBody}" Typography.NumeralAlignment="Tabular">
                                     <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                                    <Grid.RowDefinitions><RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition /></Grid.RowDefinitions>
+                                    <Grid.RowDefinitions><RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition /></Grid.RowDefinitions>
                                     <TextBlock Grid.Row="0" Text="MAC" Style="{StaticResource Secondary}" Margin="0,4,24,4" />
                                     <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding MacText}" Style="{StaticResource Primary}" Margin="0,4" />
                                     <TextBlock Grid.Row="1" Text="Lease" Style="{StaticResource Secondary}" Margin="0,4,24,4" />
@@ -319,7 +327,15 @@
                                                Visibility="{Binding VendorClass, Converter={StaticResource VisibleWhen}}" />
                                     <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding VendorClass}" Style="{StaticResource Primary}" Margin="0,4"
                                                Visibility="{Binding VendorClass, Converter={StaticResource VisibleWhen}}" />
+                                    <TextBlock Grid.Row="4" Text="Ping" Style="{StaticResource Secondary}" Margin="0,4,24,4" />
+                                    <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding PingSummary}" Margin="0,4" TextWrapping="Wrap"
+                                               Foreground="{Binding PingState, Converter={StaticResource StateBrush}}" AutomationProperties.LiveSetting="Off" />
                                 </Grid>
+                                <!-- The last two minutes of pings: a line for latency, a red mark for each missed reply -->
+                                <local:Sparkline Height="56" Margin="0,12,0,0" Slots="120" Samples="{Binding PingSamples}"
+                                                 LineBrush="{DynamicResource TextSecondary}" LossBrush="{DynamicResource BadBrush}" BaselineBrush="{DynamicResource RaisedBg}"
+                                                 ToolTip="Ping latency over the last two minutes. Red marks are pings with no reply."
+                                                 AutomationProperties.Name="{Binding PingSummary}" />
                             </StackPanel>
 
                             <StackPanel Visibility="{Binding FocusedDevice, Converter={StaticResource VisibleWhen}}" Margin="0,24,0,0">
@@ -362,7 +378,7 @@
                                                 </Button.Style>
                                                 <Grid>
                                                     <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" />
                                                     </Grid.ColumnDefinitions>
                                                     <Ellipse Width="12" Height="12" Margin="0,0,16,0" VerticalAlignment="Center" Fill="{Binding StateColour, Converter={StaticResource StateBrush}}" />
                                                     <StackPanel Grid.Column="1" Typography.NumeralAlignment="Tabular">
@@ -373,7 +389,14 @@
                                                             <Run Text="{Binding MacText, Mode=OneWay}" /><Run Text="  ·  " /><Run Text="{Binding Vendor, Mode=OneWay}" /><Run Text="  ·  " /><Run Text="{Binding LeaseText, Mode=OneWay}" />
                                                         </TextBlock>
                                                     </StackPanel>
-                                                    <TextBlock Grid.Column="2" Text="Shown above" Style="{StaticResource Meta}" Margin="16,0,0,0" VerticalAlignment="Center"
+                                                    <StackPanel Grid.Column="2" Margin="16,0,0,0" VerticalAlignment="Center" Width="96"
+                                                                Visibility="{Binding PingText, Converter={StaticResource VisibleWhen}}">
+                                                        <local:Sparkline Height="20" Slots="60" Samples="{Binding PingSamples}"
+                                                                         LineBrush="{DynamicResource TextSecondary}" LossBrush="{DynamicResource BadBrush}" />
+                                                        <TextBlock Text="{Binding PingText}" Style="{StaticResource Meta}" HorizontalAlignment="Right" Typography.NumeralAlignment="Tabular"
+                                                                   Foreground="{Binding PingState, Converter={StaticResource StateBrush}}" />
+                                                    </StackPanel>
+                                                    <TextBlock Grid.Column="3" Text="Shown above" Style="{StaticResource Meta}" Margin="16,0,0,0" VerticalAlignment="Center"
                                                                Visibility="{Binding IsFocused, Converter={StaticResource VisibleWhen}}" />
                                                 </Grid>
                                             </Button>
@@ -395,13 +418,43 @@
                             <Run Text="   " /><Run Text="{Binding LatestLogText, Mode=OneWay}" Foreground="{DynamicResource TextMuted}" />
                         </TextBlock>
                     </Expander.Header>
-                    <Grid Height="176" Margin="0,8,0,16">
+                    <Grid Margin="0,8,0,16">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="176" />
+                        </Grid.RowDefinitions>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="2*" />
                             <ColumnDefinition Width="16" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <ListBox x:Name="LogList" ItemsSource="{Binding LogRows}" Background="Transparent" BorderThickness="0"
+                        <!-- Filter and export -->
+                        <Grid Grid.ColumnSpan="3" Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" MaxWidth="320" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <ComboBox ItemsSource="{x:Static vm:MainViewModel.LogLevels}" SelectedItem="{Binding LogLevel}" MinWidth="200" FontSize="{StaticResource TextSmall}"
+                                      AutomationProperties.Name="Show log entries" />
+                            <ComboBox Grid.Column="1" ItemsSource="{x:Static vm:MainViewModel.LogAreas}" SelectedItem="{Binding LogArea}" MinWidth="128" Margin="8,0,0,0"
+                                      FontSize="{StaticResource TextSmall}" AutomationProperties.Name="Log area" />
+                            <TextBox Grid.Column="2" Text="{Binding LogSearch, UpdateSourceTrigger=PropertyChanged, Delay=200}" Margin="8,0,0,0" FontSize="{StaticResource TextSmall}"
+                                     VerticalContentAlignment="Center" AutomationProperties.Name="Search the log" ToolTip="Search the log, for example an IP or MAC address" />
+                            <TextBlock Grid.Column="3" Text="{Binding LogCountText}" Style="{StaticResource Meta}" Margin="16,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                            <Button Grid.Column="4" Content="Show everything" Style="{StaticResource SecondaryButton}" Margin="0,0,8,0" Command="{Binding ClearLogFilterCommand}" />
+                            <Button Grid.Column="5" Style="{StaticResource SecondaryButton}" Command="{Binding ExportLogCommand}"
+                                    ToolTip="Save the entries shown here as a text file (for a job report) or CSV (for Excel)">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xEDE1;" FontFamily="{StaticResource IconFont}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                    <TextBlock Text="Export log…" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
+                        </Grid>
+                        <ListBox x:Name="LogList" Grid.Row="1" ItemsSource="{Binding LogRows}" Background="Transparent" BorderThickness="0"
                                  VirtualizingPanel.IsVirtualizing="True" Loaded="OnLogLoaded" AutomationProperties.Name="Session log">
                             <ListBox.ItemTemplate>
                                 <DataTemplate DataType="{x:Type vm:LogItemViewModel}">
@@ -420,7 +473,7 @@
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
                         </ListBox>
-                        <TextBox Grid.Column="2" Style="{StaticResource MonoBox}" MaxHeight="10000"
+                        <TextBox Grid.Row="1" Grid.Column="2" Style="{StaticResource MonoBox}" MaxHeight="10000"
                                  Text="{Binding SelectedItem.Entry, ElementName=LogList, Mode=OneWay, Converter={x:Static local:LogDetailConverter.Instance}, TargetNullValue='Select a log line to see its details.', FallbackValue='Select a log line to see its details.'}" />
                     </Grid>
                 </Expander>
@@ -432,39 +485,75 @@
             <Border Background="{DynamicResource Scrim}" MouseLeftButtonDown="OnScrimClicked" />
             <Border x:Name="SettingsPanel" Width="448" HorizontalAlignment="Right" Background="{DynamicResource PanelBg}"
                     KeyboardNavigation.TabNavigation="Cycle" KeyboardNavigation.ControlTabNavigation="Cycle"
-                    AutomationProperties.Name="Server settings">
+                    AutomationProperties.Name="Profiles and settings">
                 <Border.RenderTransform>
                     <TranslateTransform x:Name="SettingsSlide" />
                 </Border.RenderTransform>
                 <DockPanel DataContext="{Binding Settings}">
                     <!-- Header -->
                     <Grid DockPanel.Dock="Top" Margin="32,24,24,0">
-                        <TextBlock Text="Server settings" FontFamily="{StaticResource DisplayFont}" FontSize="{StaticResource TextHead}" FontWeight="Bold"
+                        <TextBlock Text="Profiles" FontFamily="{StaticResource DisplayFont}" FontSize="{StaticResource TextHead}" FontWeight="Bold"
                                    Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center" />
                         <Button x:Name="CloseSettingsButton" Style="{StaticResource IconButton}" Content="&#xE711;" HorizontalAlignment="Right"
                                 Command="{Binding DataContext.CloseSettingsCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                ToolTip="Close settings (Esc)" AutomationProperties.Name="Close settings" />
+                                ToolTip="Close (Esc)" AutomationProperties.Name="Close profiles and settings" />
                     </Grid>
 
-                    <!-- Footer: always clickable; Save shows what needs fixing -->
+                    <!-- Footer: always clickable for your own profiles; Save shows what needs fixing -->
                     <Border DockPanel.Dock="Bottom" Background="{DynamicResource RaisedBg}" Padding="32,16">
                         <StackPanel Orientation="Horizontal">
-                            <Button Content="Save settings" Style="{StaticResource AccentButton}" MinHeight="48"
-                                    Command="{Binding DataContext.SaveSettingsFormCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
-                            <Button Content="Reset to defaults" Style="{StaticResource SecondaryButton}" MinHeight="48" Margin="8,0,0,0" Background="{DynamicResource PanelBg}"
-                                    Command="{Binding DataContext.ResetSettingsCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                    IsEnabled="{Binding DataContext.SettingsEditable, RelativeSource={RelativeSource AncestorType=Window}}" />
+                            <Button Content="Save profile" Style="{StaticResource AccentButton}" MinHeight="48" Command="{Binding SaveCommand}" />
+                            <Button Content="Discard changes" Style="{StaticResource SecondaryButton}" MinHeight="48" Margin="8,0,0,0" Background="{DynamicResource PanelBg}"
+                                    Command="{Binding DiscardCommand}" />
                         </StackPanel>
                     </Border>
 
                     <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="32,0,32,24">
                         <StackPanel>
                             <Border Style="{StaticResource Banner}" Margin="0,16,0,0" Padding="16,12" Background="{DynamicResource WarnSoft}"
-                                    Visibility="{Binding DataContext.IsRunning, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource VisibleWhen}}">
-                                <TextBlock Text="The server is running. Stop it to change these; the theme can change any time." FontSize="{StaticResource TextBody}" Style="{StaticResource Primary}" />
+                                    Visibility="{Binding IsLocked, Converter={StaticResource VisibleWhen}}">
+                                <TextBlock Text="The server is running. Stop it to change or switch profiles; the theme can change any time." FontSize="{StaticResource TextBody}" Style="{StaticResource Primary}" />
                             </Border>
 
-                            <StackPanel x:Name="SettingsForm" IsEnabled="{Binding DataContext.SettingsEditable, RelativeSource={RelativeSource AncestorType=Window}}">
+                            <!-- Which profile, and managing profiles -->
+                            <Label Content="_Profile" Target="{Binding ElementName=SettingsProfileBox}" Style="{StaticResource FieldLabel}" />
+                            <ComboBox x:Name="SettingsProfileBox" ItemsSource="{Binding Profiles}" SelectedItem="{Binding SelectedProfile}" DisplayMemberPath="Display"
+                                      IsEnabled="{Binding CanManage}" FontSize="{StaticResource TextBody}" HorizontalAlignment="Stretch" />
+                            <TextBlock Text="Start uses the profile picked here." Style="{StaticResource FieldHelp}" />
+                            <WrapPanel Margin="0,12,0,0">
+                                <Button Content="New" Style="{StaticResource SecondaryButton}" Margin="0,0,8,8" Command="{Binding NewCommand}" ToolTip="Make a new profile from the defaults" />
+                                <Button Content="Duplicate" Style="{StaticResource SecondaryButton}" Margin="0,0,8,8" Command="{Binding DuplicateCommand}" ToolTip="Copy this profile so you can change it" />
+                                <Button Content="Import…" Style="{StaticResource SecondaryButton}" Margin="0,0,8,8" Command="{Binding ImportCommand}" ToolTip="Add profiles from a file someone exported" />
+                                <Button Content="Export…" Style="{StaticResource SecondaryButton}" Margin="0,0,8,8" Command="{Binding ExportCommand}" ToolTip="Save this profile to a file to share or back up" />
+                                <Button Content="Delete" Style="{StaticResource DangerButton}" Margin="0,0,8,8" Command="{Binding DeleteCommand}"
+                                        Visibility="{Binding IsPreset, Converter={StaticResource VisibleWhen}, ConverterParameter=Invert}" />
+                            </WrapPanel>
+
+                            <Border Style="{StaticResource Banner}" Margin="0,8,0,0" Padding="16,12" Background="{DynamicResource RaisedBg}"
+                                    Visibility="{Binding Notice, Converter={StaticResource VisibleWhen}}">
+                                <TextBlock Text="{Binding Notice}" FontSize="{StaticResource TextBody}" Style="{StaticResource Primary}" AutomationProperties.LiveSetting="Polite" />
+                            </Border>
+
+                            <Border Style="{StaticResource Banner}" Margin="0,8,0,0" Padding="16,12" Background="{DynamicResource RaisedBg}"
+                                    Visibility="{Binding IsPreset, Converter={StaticResource VisibleWhen}}">
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Notes}" FontSize="{StaticResource TextBody}" Style="{StaticResource Primary}" />
+                                    <TextBlock Text="This is a preset, so it can't be changed. Press Duplicate to make your own copy." Margin="0,8,0,0"
+                                               FontSize="{StaticResource TextSmall}" Style="{StaticResource Secondary}" TextWrapping="Wrap" />
+                                </StackPanel>
+                            </Border>
+
+                            <StackPanel x:Name="SettingsForm" IsEnabled="{Binding CanEdit}">
+                                <StackPanel Visibility="{Binding IsPreset, Converter={StaticResource VisibleWhen}, ConverterParameter=Invert}">
+                                    <Label Content="_Name" Target="{Binding ElementName=ProfileNameBox}" Style="{StaticResource FieldLabel}" />
+                                    <TextBox x:Name="ProfileNameBox" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" />
+
+                                    <Label Content="N_otes (optional)" Target="{Binding ElementName=NotesBox}" Style="{StaticResource FieldLabel}" />
+                                    <TextBox x:Name="NotesBox" Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}"
+                                             AcceptsReturn="True" TextWrapping="Wrap" MinHeight="64" VerticalContentAlignment="Top" />
+                                    <TextBlock Text="For example the site or the gear this profile is for." Style="{StaticResource FieldHelp}" />
+                                </StackPanel>
+
                                 <Label Content="_Server IP" Target="{Binding ElementName=ServerIpBox}" Style="{StaticResource FieldLabel}" />
                                 <TextBox x:Name="ServerIpBox" Text="{Binding ServerIp, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" />
                                 <TextBlock Text="Set on your adapter while the server runs, and put back on Stop." Style="{StaticResource FieldHelp}" />
@@ -472,7 +561,7 @@
                                 <Label Content="Su_bnet" Target="{Binding ElementName=PrefixBox}" Style="{StaticResource FieldLabel}" />
                                 <ComboBox x:Name="PrefixBox" ItemsSource="{x:Static vm:SettingsViewModel.Prefixes}" SelectedItem="{Binding Prefix}" FontSize="{StaticResource TextBody}" HorizontalAlignment="Stretch" />
 
-                                <Label Content="Address _pool" Target="{Binding ElementName=PoolStartBox}" Style="{StaticResource FieldLabel}" />
+                                <Label Content="Address poo_l" Target="{Binding ElementName=PoolStartBox}" Style="{StaticResource FieldLabel}" />
                                 <Grid>
                                     <Grid.ColumnDefinitions><ColumnDefinition /><ColumnDefinition Width="Auto" /><ColumnDefinition /></Grid.ColumnDefinitions>
                                     <TextBox x:Name="PoolStartBox" Text="{Binding PoolStart, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}"
@@ -482,9 +571,9 @@
                                              AutomationProperties.Name="Last address in the pool" />
                                 </Grid>
                                 <Button Content="Suggest a pool for this subnet" Style="{StaticResource SecondaryButton}" Margin="0,8,0,0" HorizontalAlignment="Left"
-                                        Command="{Binding DataContext.SuggestPoolCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
+                                        Command="{Binding SuggestPoolCommand}" />
 
-                                <Label Content="_Lease time (minutes)" Target="{Binding ElementName=LeaseBox}" Style="{StaticResource FieldLabel}" />
+                                <Label Content="Lease _time (minutes)" Target="{Binding ElementName=LeaseBox}" Style="{StaticResource FieldLabel}" />
                                 <TextBox x:Name="LeaseBox" Text="{Binding LeaseMinutes, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" />
 
                                 <Label Content="_Gateway (optional)" Target="{Binding ElementName=RouterBox}" Style="{StaticResource FieldLabel}" />
@@ -496,19 +585,72 @@
                                 <TextBlock Text="DHCP option 6. Separate several with commas, like 8.8.8.8, 1.1.1.1" Style="{StaticResource FieldHelp}" />
 
                                 <CheckBox IsChecked="{Binding AlwaysBroadcast}" Margin="0,24,0,0">
-                                    <TextBlock Style="{StaticResource Primary}" FontSize="{StaticResource TextBody}"
+                                    <TextBlock Style="{StaticResource Primary}" FontSize="{StaticResource TextBody}" TextWrapping="Wrap"
                                                Text="Always broadcast replies (for devices that never accept an offer)" />
                                 </CheckBox>
-                            </StackPanel>
 
-                            <Label Content="_Theme" Target="{Binding ElementName=ThemeBox}" Style="{StaticResource FieldLabel}" Margin="0,32,0,8" />
-                            <ComboBox x:Name="ThemeBox" ItemsSource="{x:Static vm:SettingsViewModel.Themes}" SelectedItem="{Binding Theme}" FontSize="{StaticResource TextBody}" HorizontalAlignment="Stretch" />
+                                <!-- Options most jobs don't need -->
+                                <Expander Margin="0,24,0,0" IsExpanded="{Binding HasExtraOptions, Mode=OneWay}" Foreground="{DynamicResource TextPrimary}">
+                                    <Expander.Header>
+                                        <TextBlock Text="More DHCP options" FontSize="{StaticResource TextBody}" FontWeight="SemiBold" Style="{StaticResource Primary}" />
+                                    </Expander.Header>
+                                    <StackPanel>
+                                        <Label Content="Domain na_me (option 15)" Target="{Binding ElementName=DomainBox}" Style="{StaticResource FieldLabel}" />
+                                        <TextBox x:Name="DomainBox" Text="{Binding DomainName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" />
+
+                                        <Label Content="NTP ser_vers (option 42)" Target="{Binding ElementName=NtpBox}" Style="{StaticResource FieldLabel}" />
+                                        <TextBox x:Name="NtpBox" Text="{Binding NtpServers, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" />
+                                        <TextBlock Text="Time server addresses, separated by commas." Style="{StaticResource FieldHelp}" />
+
+                                        <Label Content="TFTP or provisioning server (option _66)" Target="{Binding ElementName=Option66Box}" Style="{StaticResource FieldLabel}" />
+                                        <TextBox x:Name="Option66Box" Text="{Binding Option66, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" />
+                                        <TextBlock Text="A name, address or URL, sent as text. Used by many IP phones." Style="{StaticResource FieldHelp}" />
+
+                                        <Label Content="TFTP server addresses (option 15_0)" Target="{Binding ElementName=Option150Box}" Style="{StaticResource FieldLabel}" />
+                                        <TextBox x:Name="Option150Box" Text="{Binding Option150, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" />
+                                        <TextBlock Text="Used by Cisco IP phones. Separate several with commas." Style="{StaticResource FieldHelp}" />
+
+                                        <Label Content="Vendor-specific (option _43, hex)" Target="{Binding ElementName=Option43Box}" Style="{StaticResource FieldLabel}" />
+                                        <TextBox x:Name="Option43Box" Text="{Binding Option43, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}"
+                                                 FontFamily="{StaticResource MonoFont}" />
+                                        <TextBlock Text="Bytes as hex, like 01 04 C0 A8 64 0A. The device's manual gives the value." Style="{StaticResource FieldHelp}" />
+
+                                        <TextBlock Text="Other options" FontSize="{StaticResource TextBody}" FontWeight="Medium" Style="{StaticResource Secondary}" Margin="0,24,0,8" />
+                                        <ItemsControl ItemsSource="{Binding CustomOptions}" AutomationProperties.Name="Other options">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate DataType="{x:Type vm:CustomOptionRow}">
+                                                    <Grid Margin="0,0,0,8">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="64" /><ColumnDefinition Width="112" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <TextBox Text="{Binding Code, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}"
+                                                                 AutomationProperties.Name="Option code" ToolTip="Option code, 1 to 254" />
+                                                        <ComboBox Grid.Column="1" ItemsSource="{x:Static vm:SettingsViewModel.Formats}" SelectedItem="{Binding Format}" Margin="8,0,0,0"
+                                                                  FontSize="{StaticResource TextSmall}" AutomationProperties.Name="Value type" />
+                                                        <TextBox Grid.Column="2" Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" Margin="8,0,0,0"
+                                                                 AutomationProperties.Name="Option value" />
+                                                        <Button Grid.Column="3" Style="{StaticResource IconButton}" Content="&#xE74D;" Width="40" Height="40" Margin="8,0,0,0"
+                                                                Command="{Binding DataContext.RemoveCustomOptionCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}"
+                                                                ToolTip="Remove this option" AutomationProperties.Name="Remove this option" />
+                                                    </Grid>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                        <Button Content="Add an option" Style="{StaticResource SecondaryButton}" HorizontalAlignment="Left" Command="{Binding AddCustomOptionCommand}" />
+                                        <TextBlock Text="Text for names and URLs, Addresses for IP lists, Hex for anything else." Style="{StaticResource FieldHelp}" />
+                                    </StackPanel>
+                                </Expander>
+                            </StackPanel>
 
                             <Border Style="{StaticResource Banner}" Margin="0,24,0,0" Padding="16,12" Background="{DynamicResource BadSoft}"
                                     Visibility="{Binding Errors, Converter={StaticResource VisibleWhen}}">
                                 <TextBlock Text="{Binding Errors}" FontSize="{StaticResource TextBody}" Style="{StaticResource Primary}"
                                            AutomationProperties.LiveSetting="Polite" />
                             </Border>
+
+                            <Label Content="T_heme" Target="{Binding ElementName=ThemeBox}" Style="{StaticResource FieldLabel}" Margin="0,32,0,8" />
+                            <ComboBox x:Name="ThemeBox" ItemsSource="{x:Static vm:SettingsViewModel.Themes}" SelectedItem="{Binding Theme}" FontSize="{StaticResource TextBody}" HorizontalAlignment="Stretch" />
+                            <TextBlock Text="Applies straight away, for every profile." Style="{StaticResource FieldHelp}" />
                         </StackPanel>
                     </ScrollViewer>
                 </DockPanel>

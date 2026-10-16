@@ -76,7 +76,7 @@ public partial class MainWindow : Window
         _focusBeforeSettings = Keyboard.FocusedElement;
         Dispatcher.BeginInvoke(DispatcherPriority.Input, () =>
         {
-            if (ServerIpBox.IsEnabled) ServerIpBox.Focus();
+            if (SettingsProfileBox.IsEnabled) SettingsProfileBox.Focus();
             else CloseSettingsButton.Focus();
         });
         if (!SystemParameters.ClientAreaAnimation) return;

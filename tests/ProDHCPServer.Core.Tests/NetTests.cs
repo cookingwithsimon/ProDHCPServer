@@ -97,11 +97,11 @@ public class NetTests
     [Fact]
     public void Settings_to_config_reports_every_bad_field()
     {
-        var (config, errors) = new AppSettings { ServerIp = "192.168.100.300", DnsServers = "8.8.8.8, nope" }.ToConfig();
+        var (config, errors) = new Profiles.Profile { Name = "t", ServerIp = "192.168.100.300", DnsServers = "8.8.8.8, nope" }.ToConfig();
         Assert.Null(config);
         Assert.Equal(2, errors.Count);
 
-        var (ok, none) = new AppSettings { Router = "192.168.100.254", DnsServers = "1.1.1.1 8.8.8.8" }.ToConfig();
+        var (ok, none) = new Profiles.Profile { Name = "t", Router = "192.168.100.254", DnsServers = "1.1.1.1 8.8.8.8" }.ToConfig();
         Assert.Empty(none);
         Assert.Equal(2, ok!.DnsServers.Count);
     }

@@ -1,13 +1,16 @@
 using System.Text.Json;
-using ProDHCPServer.Core.Dhcp;
-using ProDHCPServer.Core.Net;
 
 namespace ProDHCPServer.Core;
 
-/// <summary>User preferences saved between runs. Phase 2 replaces the server fields with profiles.</summary>
+/// <summary>
+/// User preferences saved between runs. The server fields are from Phase 1, before profiles: they are only
+/// read once, to turn them into a "My settings" profile (see <see cref="Profiles.ProfileLibrary.Load"/>).
+/// </summary>
 public sealed record AppSettings
 {
     public string? LastAdapterId { get; init; }
+    /// <summary>Name of the profile Start uses.</summary>
+    public string? ActiveProfile { get; init; }
     public string ServerIp { get; init; } = "192.168.100.1";
     public int PrefixLength { get; init; } = 24;
     public string PoolStart { get; init; } = "192.168.100.100";
@@ -18,42 +21,6 @@ public sealed record AppSettings
     public bool AlwaysBroadcast { get; init; }
     /// <summary>"System", "Dark" or "Light".</summary>
     public string Theme { get; init; } = "System";
-
-    /// <summary>Builds the server config, or returns plain-English problems.</summary>
-    public (DhcpServerConfig? Config, IReadOnlyList<string> Errors) ToConfig()
-    {
-        var errors = new List<string>();
-        if (!IPv4.TryParse(ServerIp, out var server)) errors.Add($"Server IP \"{ServerIp}\" isn't a valid IPv4 address.");
-        if (!IPv4.TryParse(PoolStart, out var start)) errors.Add($"Pool start \"{PoolStart}\" isn't a valid IPv4 address.");
-        if (!IPv4.TryParse(PoolEnd, out var end)) errors.Add($"Pool end \"{PoolEnd}\" isn't a valid IPv4 address.");
-        System.Net.IPAddress? router = null;
-        if (!string.IsNullOrWhiteSpace(Router))
-        {
-            if (IPv4.TryParse(Router, out var r)) router = r;
-            else errors.Add($"Gateway \"{Router}\" isn't a valid IPv4 address.");
-        }
-        var dns = new List<System.Net.IPAddress>();
-        foreach (var part in (DnsServers ?? "").Split([',', ' ', ';'], StringSplitOptions.RemoveEmptyEntries))
-        {
-            if (IPv4.TryParse(part, out var d)) dns.Add(d);
-            else errors.Add($"DNS server \"{part}\" isn't a valid IPv4 address.");
-        }
-        if (errors.Count > 0) return (null, errors);
-
-        var config = new DhcpServerConfig
-        {
-            ServerIp = server,
-            PrefixLength = PrefixLength,
-            PoolStart = start,
-            PoolEnd = end,
-            LeaseTime = TimeSpan.FromMinutes(LeaseMinutes),
-            Router = router,
-            DnsServers = dns,
-            AlwaysBroadcast = AlwaysBroadcast,
-        };
-        var problems = config.Validate();
-        return problems.Count > 0 ? (null, problems) : (config, []);
-    }
 }
 
 public sealed class SettingsStore(string path)

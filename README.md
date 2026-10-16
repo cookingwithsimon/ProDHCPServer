@@ -14,7 +14,7 @@ Most AV kit ships set to DHCP, and on a bench or a fresh site there's usually no
 
 ## Features
 
-**Phase 1 (in progress)**
+**Phase 1**
 
 - **Pick your Ethernet adapter** from a list showing link state, speed and current IP. The app remembers your last choice.
 - **Safe adapter changes.** Your adapter's settings are backed up before anything changes and restored on Stop, on exit, at Windows shutdown, and after a crash (offered the next time you open the app).
@@ -26,7 +26,14 @@ Most AV kit ships set to DHCP, and on a bench or a fresh site there's usually no
 - **Wi-Fi and VPN overlap warnings**, with a one-click option to turn Wi-Fi off until you press Stop.
 - **Dark and light themes**, with large status text you can read from arm's length.
 
-**Default settings:** server IP `192.168.100.1/24`, addresses `192.168.100.100` to `192.168.100.199`, 60-minute leases. All of these can be changed in **Settings**.
+**Phase 2 (in progress)**
+
+- **Live ping graph for every device.** Each device with a lease is pinged once a second. The device list shows a small latency graph with the latest reply time, and the selected device shows the last two minutes with average, min, max and loss. Missed replies show as red marks. When a device stops answering, or starts again, the session log records it.
+- **Session log you can filter and export.** Filter by level (everything, warnings and problems, problems only), by area (adapter, server, DHCP, device) or by text such as an IP or MAC address. **Export log…** saves what's shown as a text file for a job report, or as CSV for Excel.
+- **Profiles.** Save the subnet, pool, lease time and DHCP options for each job or kind of gear, and pick one from the top bar before pressing Start. Options: gateway (3), DNS (6), domain name (15), NTP (42), vendor-specific (43, hex), TFTP/provisioning server (66), Cisco TFTP servers (150) and any other option as text, IP addresses or hex. Profiles can be duplicated, deleted, exported to a file and imported on another laptop.
+- **Presets** to start from: Default, Extron factory subnet (192.168.254.x, so a factory-reset unit at 192.168.254.254 is reachable), Cisco IP phones (option 150), Poly phones (option 66) and a bench test with 2-minute leases. Presets can't be changed: duplicate one to make your own.
+
+**Default profile:** server IP `192.168.100.1/24`, addresses `192.168.100.100` to `192.168.100.199`, 60-minute leases. Make your own profile under **Profiles** (the gear button) to change any of these.
 
 ## Download and run
 
@@ -51,8 +58,8 @@ Most AV kit ships set to DHCP, and on a bench or a fresh site there's usually no
 | Red banner: another DHCP server is on the link | You're plugged into a network that already hands out addresses (office, venue, home router). Unplug from it, or only use **Serve anyway** on a network you own. |
 | Step 2 red, "No link" | No cable, a dead port, or the device is off. Steps 2 to 4 recover by themselves when the link comes up. |
 | Step 5 amber, no DHCP requests after 30 seconds | The device probably has a static IP or DHCP turned off. |
-| The device gets an offer but never accepts it | Some embedded network stacks ignore their own broadcast flag. Tick **Always broadcast replies** in Settings and try again. |
-| Step 1 amber, mentions Wi-Fi or VPN | Another adapter is on the same subnet. Use **Turn it off until Stop**, or change the server IP in Settings. |
+| The device gets an offer but never accepts it | Some embedded network stacks ignore their own broadcast flag. Tick **Always broadcast replies** in your profile and try again. |
+| Step 1 amber, mentions Wi-Fi or VPN | Another adapter is on the same subnet. Use **Turn it off until Stop**, or use a profile with a different server IP. |
 | The app was killed mid-session | Open it again and click **Restore now** on the banner. The backup lives in `C:\ProgramData\ProDHCPServer\adapter-backup.json` until it's restored. |
 
 If something goes wrong, [open an issue](https://github.com/cookingwithsimon/ProDHCPServer/issues/new/choose) using the **Problem on site** form, and include the session log text if you have it.
@@ -61,15 +68,16 @@ If something goes wrong, [open an issue](https://github.com/cookingwithsimon/Pro
 
 Each phase ends with a hardware test pass on real AV equipment before the next one starts.
 
-- **Phase 1: core loop** (in progress). Everything listed under Features.
-- **Phase 2: visibility.** Continuous ping with a latency graph per device, a full session log you can filter and export (TXT/CSV), and saved profiles for subnet, pool, lease time and DHCP options (router, DNS, NTP, option 43/66/150 and custom options).
+- **Phase 1: core loop** (done, hardware-tested October 2026).
+- **Phase 2: visibility** (in progress). Continuous ping with a latency graph per device, a full session log you can filter and export (TXT/CSV), and saved profiles for subnet, pool, lease time and DHCP options (router, DNS, NTP, option 43/66/150 and custom options).
 - **Phase 3: discovery.** Find devices that already have a static IP, move your adapter onto their subnet in one click, and discover devices via mDNS (including Dante), SSDP/UPnP and LLDP/CDP.
 
 ## Files it writes
 
 | What | Where |
 |---|---|
-| Your settings | `%LOCALAPPDATA%\ProDHCPServer\settings.json` |
+| Your settings (last adapter, profile in use, theme) | `%LOCALAPPDATA%\ProDHCPServer\settings.json` |
+| Your profiles | `%LOCALAPPDATA%\ProDHCPServer\profiles.json` |
 | Adapter backup (only while a session runs, or after a crash) | `%ProgramData%\ProDHCPServer\adapter-backup.json` |
 
 While serving, the app also adds a Windows Firewall rule so it can receive DHCP traffic (UDP 67 and 68, for this exe only), and removes the rule on Stop.

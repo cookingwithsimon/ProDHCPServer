@@ -232,4 +232,26 @@ public class WindowsIntegrationTests(Xunit.Abstractions.ITestOutputHelper output
         using var ping = new Ping();
         Assert.Equal(IPStatus.Success, (await ping.SendPingAsync(IPAddress.Loopback, 1000)).Status);
     }
+
+    [WindowsFact]
+    public async Task Device_monitor_pings_once_a_second_and_logs_nothing_while_answering()
+    {
+        var log = new Core.SessionLog();
+        await using var monitor = new DeviceMonitor(log);
+        var mac = MacAddress.Parse("02:00:00:00:00:01");
+        monitor.Sync([new MonitoredDevice(mac, IPAddress.Loopback, "Loopback")]);
+        await Task.Delay(TimeSpan.FromSeconds(3.5));
+
+        var history = monitor.History(mac);
+        Assert.NotNull(history);
+        var samples = history.Snapshot();
+        output.WriteLine(string.Join(", ", samples.Select(s => $"{s.Success}/{s.RoundTripMs}")));
+        Assert.InRange(samples.Count, 3, 5);
+        Assert.All(samples, s => Assert.True(s.Success));
+        Assert.DoesNotContain(log.Snapshot(), e => e.Category == Core.LogCategory.Device);
+
+        // Dropping the device stops its pinger.
+        monitor.Sync([]);
+        Assert.Null(monitor.History(mac));
+    }
 }
