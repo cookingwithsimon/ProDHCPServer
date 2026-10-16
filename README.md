@@ -6,7 +6,7 @@ Plug your laptop into a DSP, camera, switcher, display or control processor, pre
 
 ![ProDHCPServer main window in dark mode](docs/images/main-window-dark.png)
 
-> **Status:** Phase 1 (the core DHCP loop) is being built and tested on real hardware. Phases 2 and 3 follow once Phase 1 passes. See [Roadmap](#roadmap).
+> **Status:** Phases 1 (the core DHCP loop) and 2 (ping graphs, session log export, profiles) are done and passed their hardware tests in October 2026. Phase 3 (discovery) is next. See [Roadmap](#roadmap).
 
 ## Why
 
@@ -14,7 +14,7 @@ Most AV kit ships set to DHCP, and on a bench or a fresh site there's usually no
 
 ## Features
 
-**Phase 1**
+**Phase 1: core loop**
 
 - **Pick your Ethernet adapter** from a list showing link state, speed and current IP. The app remembers your last choice.
 - **Safe adapter changes.** Your adapter's settings are backed up before anything changes and restored on Stop, on exit, at Windows shutdown, and after a crash (offered the next time you open the app).
@@ -23,10 +23,11 @@ Most AV kit ships set to DHCP, and on a bench or a fresh site there's usually no
 - **Device card** with IP, MAC address, manufacturer (offline lookup, no internet needed), lease time and first-seen time.
 - **Open WebUI** in one click, picking http or https from whichever port is open, plus quick port buttons and Copy IP.
 - **Several devices at once** behind a small switch, each with its own lease.
+- **Spots a USB adapter that has stopped receiving.** Some USB Ethernet adapters keep showing "connected" but quietly stop receiving after a few seconds, which looks exactly like a silent device. If nothing has come in for 20 seconds while the laptop keeps sending, the cable/link step says so and tells you to replug the adapter. Realtek RTL8152/8153 adapters on a driver older than 2019 (including Windows' own 2015 driver) are flagged as soon as you pick them, with where to get the newer driver.
 - **Wi-Fi and VPN overlap warnings**, with a one-click option to turn Wi-Fi off until you press Stop.
 - **Dark and light themes**, with large status text you can read from arm's length.
 
-**Phase 2 (in progress)**
+**Phase 2: visibility**
 
 - **Live ping graph for every device.** Each device with a lease is pinged once a second. The device list shows a small latency graph with the latest reply time, and the selected device shows the last two minutes with average, min, max and loss. Missed replies show as red marks. When a device stops answering, or starts again, the session log records it.
 - **Session log you can filter and export.** Filter by level (everything, warnings and problems, problems only), by area (adapter, server, DHCP, device) or by text such as an IP or MAC address. **Export log…** saves what's shown as a text file for a job report, or as CSV for Excel.
@@ -67,16 +68,26 @@ Most AV kit ships set to DHCP, and on a bench or a fresh site there's usually no
 | Step 5 amber, no DHCP requests after 30 seconds | The device probably has a static IP or DHCP turned off. |
 | The device gets an offer but never accepts it | Some embedded network stacks ignore their own broadcast flag. Tick **Always broadcast replies** in your profile and try again. |
 | Step 1 amber, mentions Wi-Fi or VPN | Another adapter is on the same subnet. Use **Turn it off until Stop**, or use a profile with a different server IP. |
+| Step 2 says the cable shows connected but nothing has been received | The USB network adapter has stopped receiving. Unplug it from the laptop and plug it back in. If step 1 mentions an old Realtek driver, install the newer one: Windows Settings > Windows Update > Advanced options > Optional updates > Driver updates, tick the Realtek one only. |
+| Ping times jump around (hundreds of ms) with AV-over-IP gear on an unmanaged switch | Probably the network, not the device or the app. See [Field notes](#field-notes). |
 | The app was killed mid-session | Open it again and click **Restore now** on the banner. The backup lives in `C:\ProgramData\ProDHCPServer\adapter-backup.json` until it's restored. |
 
 If something goes wrong, [open an issue](https://github.com/cookingwithsimon/ProDHCPServer/issues/new/choose) using the **Problem on site** form, and include the session log text if you have it.
+
+## Field notes
+
+Things learned on real hardware that are worth knowing on site.
+
+- **AV-over-IP multicast slows everything on an unmanaged switch.** With an Extron NAV encoder (NAV E 101) and decoder on a small unmanaged switch, pings to both units averaged about 200 ms and jumped as high as 600 ms, with no lost packets. Windows' own `ping` showed the same, so it's the network, not the app or the device. The encoder's multicast video floods every port of an unmanaged switch. NAV, Dante video, SDVoE and other AV-over-IP gear needs a managed switch with **IGMP snooping** turned on (and an IGMP querier on the network), so multicast only goes to the ports that asked for it. Short of that, test the encoder on its own or keep the laptop off the video switch.
+- **Realtek USB adapters on the old Windows driver stop receiving.** Realtek RTL8153 USB Gigabit adapters on Microsoft's 2015 inbox driver went silent after a few seconds while the link light stayed on. Realtek's current driver (from Windows Update's optional driver updates) fixed it. The app now warns about this combination and spots the stall itself (see Troubleshooting).
+- **Managed work laptops may block the exe.** IT-managed laptops with Microsoft Defender's attack surface reduction rules can block any new unsigned exe, so every new build is refused. Test on an unmanaged laptop, or ask IT to allow a fixed folder (for example `C:\Tools\ProDHCPServer\`) rather than one file's hash, which changes with every build.
 
 ## Roadmap
 
 Each phase ends with a hardware test pass on real AV equipment before the next one starts.
 
 - **Phase 1: core loop** (done, hardware-tested October 2026).
-- **Phase 2: visibility** (in progress). Continuous ping with a latency graph per device, a full session log you can filter and export (TXT/CSV), and saved profiles for subnet, pool, lease time and DHCP options (router, DNS, NTP, option 43/66/150 and custom options).
+- **Phase 2: visibility** (done, hardware-tested October 2026). Continuous ping with a latency graph per device, a full session log you can filter and export (TXT/CSV), and saved profiles for subnet, pool, lease time and DHCP options (router, DNS, NTP, option 43/66/150 and custom options).
 - **Phase 3: discovery.** Find devices that already have a static IP, move your adapter onto their subnet in one click, and discover devices via mDNS (including Dante), SSDP/UPnP and LLDP/CDP.
 
 ## Files it writes
@@ -109,7 +120,7 @@ dotnet publish src/ProDHCPServer.App -c Release -r win-x64 -o publish
 | `src/ProDHCPServer.Windows` | Windows specifics: adapter reading and changes, the UDP 67 socket, ARP entries, firewall rule, other-server probe, ping and port checks. |
 | `src/ProDHCPServer.App` | The WPF app: UI, elevation prompt, crash handling. |
 | `tests/` | Core unit tests (run anywhere) and Windows integration tests (run on the Windows CI runner and never change adapter settings). |
-| `docs/` | Hardware test checklists for each phase. |
+| `docs/` | Hardware test checklists for each phase, and the screenshot used in this README. |
 | `tools/` | CI smoke test (launches the app and takes screenshots) and the manufacturer list updater (`python3 tools/update-oui.py`). |
 
 **CI.** Every push and pull request runs the **Build and test** workflow on Windows: build, Core and Windows tests, publish the exe, and a smoke test that screenshots the app in light and dark mode. The exe and screenshots are uploaded as run artifacts.
