@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using ProDHCPServer.Core;
 using ProDHCPServer.Core.Adapters;
+using ProDHCPServer.Core.Devices;
 using ProDHCPServer.Core.Dhcp;
 using ProDHCPServer.Core.Net;
 using ProDHCPServer.Core.Status;
@@ -73,6 +74,33 @@ public sealed partial class DeviceViewModel : ObservableObject
     [ObservableProperty] private bool _isFocused;
     [ObservableProperty] private string _title = "";
     [ObservableProperty] private StepState _stateColour;
+    [ObservableProperty] private IReadOnlyList<ProbeResult>? _pingSamples;
+    /// <summary>Short, for the device list: "3 ms" or "No reply".</summary>
+    [ObservableProperty] private string _pingText = "";
+    /// <summary>For the focused device: the last minute's latency and loss.</summary>
+    [ObservableProperty] private string _pingSummary = "";
+    [ObservableProperty] private StepState _pingState;
+
+    public void UpdatePing(PingHistory? history, DateTimeOffset now)
+    {
+        if (history?.Last is not { } last)
+        {
+            PingSamples = null;
+            PingText = LeaseState == LeaseState.Bound ? "Pinging…" : "";
+            PingSummary = PingText;
+            PingState = StepState.Idle;
+            return;
+        }
+        PingSamples = history.Snapshot();
+        var minute = history.Stats(now, TimeSpan.FromMinutes(1));
+        PingText = last.Success && last.RoundTripMs is { } ms
+            ? minute.Lost > 0 ? $"{PingStats.Ms(ms)}, {minute.LossPercent:0}% loss" : PingStats.Ms(ms)
+            : "No reply";
+        PingSummary = $"Last minute: {minute.Describe()}";
+        PingState = last.Success
+            ? minute.Lost > 0 ? StepState.Warning : StepState.Good
+            : history.ConsecutiveFailures >= PingHistory.DownAfter ? StepState.Bad : StepState.Warning;
+    }
 
     public void Update(Lease lease, DateTimeOffset now)
     {
@@ -115,7 +143,7 @@ public sealed class LogItemViewModel(LogEntry entry)
     public LogEntry Entry { get; } = entry;
     public string Time => Entry.Time.ToString("HH:mm:ss");
     public LogSeverity Severity => Entry.Severity;
-    public string Category => Entry.Category == LogCategory.Dhcp ? "DHCP" : Entry.Category.ToString();
+    public string Category => LogExport.CategoryName(Entry.Category);
     public string Message => Entry.Message;
     public string? Detail => Entry.Detail;
     public bool HasDetail => !string.IsNullOrEmpty(Entry.Detail);

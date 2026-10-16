@@ -1,5 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.IO;
+using System.Text;
 using System.Net;
 using System.Windows;
 using System.Windows.Threading;
@@ -9,6 +11,7 @@ using ProDHCPServer.Core;
 using ProDHCPServer.Core.Adapters;
 using ProDHCPServer.Core.Dhcp;
 using ProDHCPServer.Core.Net;
+using ProDHCPServer.Core.Profiles;
 using ProDHCPServer.Core.Status;
 using ProDHCPServer.Windows;
 
@@ -27,10 +30,11 @@ public sealed partial class MainViewModel : ObservableObject, IAsyncDisposable
     private bool _refreshing;
     private IReadOnlyList<AdapterInfo> _allAdapters = [];
     private DeviceProber? _prober;
+    private readonly DeviceMonitor _monitor;
     private MacAddress? _userFocus;
 
     public MainViewModel(IAdapterControl adapters, AdapterSessionManager sessions, ServerController controller,
-        SessionLog log, SettingsStore settingsStore, Dispatcher dispatcher)
+        SessionLog log, SettingsStore settingsStore, ProfileLibrary profiles, Dispatcher dispatcher)
     {
         _adapters = adapters;
         _sessions = sessions;
@@ -39,16 +43,38 @@ public sealed partial class MainViewModel : ObservableObject, IAsyncDisposable
         _dispatcher = dispatcher;
         Log = log;
         _settings = settingsStore.Load();
-        Settings = new SettingsViewModel(_settings);
+        _monitor = new DeviceMonitor(log);
+        if (profiles.Load(_settings) is { } profileProblem) log.Add(LogSeverity.Warning, LogCategory.App, profileProblem);
+        Settings = new SettingsViewModel(profiles, _settings.ActiveProfile, _settings.Theme);
+        Settings.ActiveProfileChanged += profile =>
+        {
+            if (_settings.ActiveProfile != profile.Name)
+            {
+                _settings = _settings with { ActiveProfile = profile.Name };
+                SaveSettings();
+            }
+            UpdateStatus();
+        };
+        Settings.ThemeChanged += theme =>
+        {
+            _settings = _settings with { Theme = theme };
+            SaveSettings();
+            ApplyTheme();
+        };
         Steps = new ObservableCollection<StepViewModel>(Enum.GetValues<StepId>().Select(id => new StepViewModel(id)));
 
-        foreach (var entry in log.Snapshot().TakeLast(MaxLogRows)) LogRows.Add(new LogItemViewModel(entry));
-        if (LogRows.LastOrDefault() is { } last) LatestLogText = $"{last.Entry.Time:HH:mm:ss}  {last.Message}";
+        RebuildLog();
+        if (log.Snapshot().LastOrDefault() is { } last) LatestLogText = $"{last.Time:HH:mm:ss}  {last.Message}";
         log.Added += entry => _dispatcher.BeginInvoke(() =>
         {
-            LogRows.Add(new LogItemViewModel(entry));
             LatestLogText = $"{entry.Time:HH:mm:ss}  {entry.Message}";
-            while (LogRows.Count > MaxLogRows) LogRows.RemoveAt(0);
+            _logTotal++;
+            if (CurrentLogFilter.Matches(entry))
+            {
+                LogRows.Add(new LogItemViewModel(entry));
+                while (LogRows.Count > MaxLogRows) LogRows.RemoveAt(0);
+            }
+            UpdateLogCount();
         });
 
         PendingRecovery = SafeFindRecovery();
@@ -74,6 +100,98 @@ public sealed partial class MainViewModel : ObservableObject, IAsyncDisposable
     [NotifyPropertyChangedFor(nameof(StartStopText), nameof(SettingsEditable))]
     [NotifyCanExecuteChangedFor(nameof(StartStopCommand))]
     private bool _isRunning;
+
+    partial void OnIsRunningChanged(bool value) => Settings.IsLocked = value;
+
+    // ---------- session log filter ----------
+
+    public static IReadOnlyList<LogLevelOption> LogLevels { get; } =
+    [
+        new(LogLevelFilter.All, "Everything"),
+        new(LogLevelFilter.WarningsAndErrors, "Warnings and problems"),
+        new(LogLevelFilter.ErrorsOnly, "Problems only"),
+    ];
+
+    public static IReadOnlyList<LogAreaOption> LogAreas { get; } =
+        [new(null, "All areas"), .. Enum.GetValues<LogCategory>().Select(c => new LogAreaOption(c, LogExport.CategoryName(c)))];
+
+    [ObservableProperty] private LogLevelOption _logLevel = LogLevels[0];
+    [ObservableProperty] private LogAreaOption _logArea = LogAreas[0];
+    [ObservableProperty] private string _logSearch = "";
+    [ObservableProperty] private string _logCountText = "";
+    private int _logTotal;
+
+    partial void OnLogLevelChanged(LogLevelOption value) => RebuildLog();
+    partial void OnLogAreaChanged(LogAreaOption value) => RebuildLog();
+    partial void OnLogSearchChanged(string value) => RebuildLog();
+
+    private LogFilter CurrentLogFilter => new(LogLevel.Level, LogArea.Category, LogSearch);
+
+    private void RebuildLog()
+    {
+        var all = Log.Snapshot();
+        _logTotal = all.Count;
+        var filter = CurrentLogFilter;
+        LogRows.Clear();
+        foreach (var entry in all.Where(filter.Matches).TakeLast(MaxLogRows)) LogRows.Add(new LogItemViewModel(entry));
+        UpdateLogCount();
+    }
+
+    private void UpdateLogCount()
+    {
+        if (CurrentLogFilter.IsEmpty) { LogCountText = _logTotal == 1 ? "1 entry" : $"{_logTotal} entries"; return; }
+        var shown = Log.Snapshot().Count(CurrentLogFilter.Matches);
+        LogCountText = $"{shown} of {_logTotal} entries match";
+    }
+
+    [RelayCommand]
+    private void ClearLogFilter()
+    {
+        LogLevel = LogLevels[0];
+        LogArea = LogAreas[0];
+        LogSearch = "";
+    }
+
+    /// <summary>Saves the entries the filter shows (all of them, not just the last few hundred on screen) as TXT or CSV.</summary>
+    [RelayCommand]
+    private void ExportLog()
+    {
+        var now = DateTimeOffset.Now;
+        var dialog = new Microsoft.Win32.SaveFileDialog
+        {
+            Title = "Export session log",
+            Filter = "Text for reading or a job report (*.txt)|*.txt|CSV for Excel (*.csv)|*.csv",
+            FileName = LogExport.SuggestedFileName(now, "txt"),
+            AddExtension = true,
+        };
+        if (dialog.ShowDialog(Application.Current.MainWindow) != true) return;
+        var filter = CurrentLogFilter;
+        var entries = Log.Snapshot().Where(filter.Matches).ToList();
+        bool csv = dialog.FilterIndex == 2 || dialog.FileName.EndsWith(".csv", StringComparison.OrdinalIgnoreCase);
+        try
+        {
+            // Excel only reads UTF-8 CSV correctly with a byte order mark.
+            if (csv) File.WriteAllText(dialog.FileName, LogExport.ToCsv(entries), new UTF8Encoding(true));
+            else File.WriteAllText(dialog.FileName, LogExport.ToText(entries, ExportHeader(filter), now), new UTF8Encoding(false));
+            Log.Add(LogSeverity.Info, LogCategory.App, $"Exported {entries.Count} log entries to {dialog.FileName}.");
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            ShowError($"Couldn't save the log to {dialog.FileName}: {ex.Message}", ex.ToString());
+        }
+    }
+
+    private IEnumerable<string> ExportHeader(LogFilter filter)
+    {
+        yield return $"ProDHCPServer {App.Version} on {Environment.MachineName} (Windows {Environment.OSVersion.Version})";
+        if (SelectedAdapter?.Info is { } a)
+            yield return $"Adapter: {a.Name} ({a.Description}){(a.Driver is { } d ? $", driver {d}" : "")}";
+        var p = Settings.ActiveProfile;
+        yield return $"Profile: {p.Name} ({p.Summary}, lease {p.LeaseMinutes} min)";
+        if (_controller.StartedAt is { } started) yield return $"Server started {started:yyyy-MM-dd HH:mm:ss}{(_controller.IsActive ? ", still running" : "")}";
+        if (!filter.IsEmpty)
+            yield return $"Filter: {LogLevel.Label}, {LogArea.Label}{(string.IsNullOrWhiteSpace(LogSearch) ? "" : $", containing \"{LogSearch.Trim()}\"")}";
+    }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(StartStopText))]
@@ -201,6 +319,8 @@ public sealed partial class MainViewModel : ObservableObject, IAsyncDisposable
         foreach (var gone in Devices.Where(d => leases.All(l => l.Mac != d.Mac)).ToList()) Devices.Remove(gone);
 
         var bound = leases.Where(l => l.State == LeaseState.Bound && l.Expires > now).ToList();
+        _monitor.Sync(bound.Select(l => new MonitoredDevice(l.Mac, l.Ip, Devices.First(d => d.Mac == l.Mac).Title)).ToList());
+        foreach (var d in Devices) d.UpdatePing(bound.Any(l => l.Mac == d.Mac) ? _monitor.History(d.Mac) : null, now);
         var focusLease = (_userFocus is { } f ? bound.FirstOrDefault(l => l.Mac == f) : null) ?? bound.MaxBy(l => l.BoundAt);
         var focusVm = focusLease is null ? null : Devices.First(d => d.Mac == focusLease.Mac);
         foreach (var d in Devices) d.IsFocused = d == focusVm;
@@ -233,7 +353,7 @@ public sealed partial class MainViewModel : ObservableObject, IAsyncDisposable
     private void UpdateStatus()
     {
         var adapter = SelectedAdapter?.Info;
-        var (config, _) = _settings.ToConfig();
+        var (config, _) = Settings.BuildActive();
         config = _controller.Config ?? config ?? DhcpServerConfig.Default;
         var engine = _controller.Engine;
         var conflicts = adapter is null ? [] : AdapterRules.OverlappingAdapters(_allAdapters, adapter.Id, config.ServerIp, config.PrefixLength);
@@ -260,8 +380,8 @@ public sealed partial class MainViewModel : ObservableObject, IAsyncDisposable
             Traffic = DhcpTraffic(),
             Leases = leases,
             FocusLease = focus,
-            Ping = _prober?.LastPing,
-            ConsecutivePingFailures = _prober?.ConsecutivePingFailures ?? 0,
+            Ping = FocusedPing?.Last,
+            ConsecutivePingFailures = FocusedPing?.ConsecutiveFailures ?? 0,
             WebUi = _prober?.LastWebUi,
             ConflictingAdapters = conflicts,
             ConnectedVpns = vpns,
@@ -281,7 +401,7 @@ public sealed partial class MainViewModel : ObservableObject, IAsyncDisposable
         {
             HeadlineState = StepState.Idle;
             HeadlineText = adapter is null ? "Pick an adapter to begin" : $"Ready to serve DHCP on {adapter.Name}";
-            HeadlineAction = $"Press Start to set {config.ServerIp}/{config.PrefixLength} and hand out {config.PoolStart} to {config.PoolEnd}.";
+            HeadlineAction = $"Press Start to set {config.ServerIp}/{config.PrefixLength} and hand out {config.PoolStart} to {config.PoolEnd} (profile \"{Settings.ActiveProfile.Name}\").";
         }
         else
         {
@@ -306,6 +426,8 @@ public sealed partial class MainViewModel : ObservableObject, IAsyncDisposable
             OtherServerDetail = null;
         }
     }
+
+    private Core.Devices.PingHistory? FocusedPing => FocusedDevice is { } d ? _monitor.History(d.Mac) : null;
 
     private IReadOnlyList<DhcpEngineEvent> _trafficCache = [];
     private int _trafficCount = -1;
@@ -356,15 +478,20 @@ public sealed partial class MainViewModel : ObservableObject, IAsyncDisposable
             ShowError("Pick the adapter your cable is plugged into first.");
             return;
         }
-        var config = Settings.TryBuild(_settings);
+        // Unsaved edits to the profile are saved first, the same as pressing Save.
+        if (!Settings.SaveIfDirty())
+        {
+            SettingsOpen = true;
+            ShowError($"The profile \"{Settings.ActiveProfile.Name}\" has changes that need fixing before starting.", Settings.Errors);
+            return;
+        }
+        var (config, problems) = Settings.BuildActive();
         if (config is null)
         {
             SettingsOpen = true;
-            ShowError("The server settings need fixing before starting.", Settings.Errors);
+            ShowError($"The profile \"{Settings.ActiveProfile.Name}\" needs fixing before starting.", string.Join(Environment.NewLine, problems));
             return;
         }
-        _settings = Settings.ApplyTo(_settings);
-        SaveSettings();
 
         lock (_engineEvents) _engineEvents.Clear();
         Devices.Clear();
@@ -373,6 +500,7 @@ public sealed partial class MainViewModel : ObservableObject, IAsyncDisposable
         try
         {
             await Task.Run(() => _controller.Start(adapter, config));
+            Log.Add(LogSeverity.Info, LogCategory.Server, $"Using profile \"{Settings.ActiveProfile.Name}\" ({Settings.ActiveProfile.Summary}).");
             IsRunning = true;
         }
         catch (AdapterOperationException ex)
@@ -410,6 +538,7 @@ public sealed partial class MainViewModel : ObservableObject, IAsyncDisposable
             IsRunning = _controller.IsActive;
         }
         if (_prober is { } p) { _prober = null; await p.DisposeAsync(); }
+        await _monitor.ClearAsync();
         await RefreshAsync();
     }
 
@@ -528,29 +657,7 @@ public sealed partial class MainViewModel : ObservableObject, IAsyncDisposable
 
     /// <summary>Checks the settings form when a field loses focus, so problems show before Save rather than while typing.</summary>
     [RelayCommand]
-    private void ValidateSettings() => Settings.TryBuild(_settings);
-
-    [RelayCommand]
-    private void SaveSettingsForm()
-    {
-        if (Settings.TryBuild(_settings) is null) return;
-        var themeChanged = Settings.Theme != _settings.Theme;
-        _settings = Settings.ApplyTo(_settings);
-        SaveSettings();
-        if (themeChanged) ApplyTheme();
-        SettingsOpen = false;
-        UpdateStatus();
-    }
-
-    [RelayCommand]
-    private void SuggestPool() => Settings.SuggestPool();
-
-    [RelayCommand]
-    private void ResetSettings()
-    {
-        Settings.Load(new AppSettings { LastAdapterId = _settings.LastAdapterId, Theme = _settings.Theme });
-        Settings.Errors = "";
-    }
+    private void ValidateSettings() => Settings.Validate();
 
     [RelayCommand]
     private void DismissError()
@@ -599,5 +706,16 @@ public sealed partial class MainViewModel : ObservableObject, IAsyncDisposable
     {
         _timer.Stop();
         if (_prober is { } p) await p.DisposeAsync();
+        await _monitor.DisposeAsync();
     }
+}
+
+public sealed record LogLevelOption(LogLevelFilter Level, string Label)
+{
+    public override string ToString() => Label;
+}
+
+public sealed record LogAreaOption(LogCategory? Category, string Label)
+{
+    public override string ToString() => Label;
 }

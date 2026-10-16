@@ -1,60 +1,25 @@
 using System.Net;
-using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using ProDHCPServer.Core.Status;
 
 namespace ProDHCPServer.Windows;
 
-/// <summary>Pings one device every second and checks its web ports every few seconds.</summary>
+/// <summary>Checks the focused device's web ports every few seconds. Pings come from <see cref="DeviceMonitor"/>.</summary>
 public sealed class DeviceProber : IAsyncDisposable
 {
     private readonly CancellationTokenSource _cts = new();
-    private readonly Task _pingLoop;
     private readonly Task _portLoop;
 
     public DeviceProber(IPAddress target)
     {
         Target = target;
-        _pingLoop = Task.Run(() => PingLoop(_cts.Token));
         _portLoop = Task.Run(() => PortLoop(_cts.Token));
     }
 
     public IPAddress Target { get; }
-    public ProbeResult? LastPing { get; private set; }
-    public int ConsecutivePingFailures { get; private set; }
     public WebUiProbe? LastWebUi { get; private set; }
 
     public event Action? Updated;
-
-    private async Task PingLoop(CancellationToken ct)
-    {
-        using var ping = new Ping();
-        while (!ct.IsCancellationRequested)
-        {
-            try
-            {
-                var reply = await ping.SendPingAsync(Target, TimeSpan.FromMilliseconds(1000), cancellationToken: ct);
-                if (reply.Status == IPStatus.Success)
-                {
-                    LastPing = new ProbeResult(DateTimeOffset.Now, true, reply.RoundtripTime);
-                    ConsecutivePingFailures = 0;
-                }
-                else
-                {
-                    LastPing = new ProbeResult(DateTimeOffset.Now, false, null, $"Ping {Target}: {reply.Status}");
-                    ConsecutivePingFailures++;
-                }
-            }
-            catch (OperationCanceledException) { return; }
-            catch (PingException ex)
-            {
-                LastPing = new ProbeResult(DateTimeOffset.Now, false, null, ex.InnerException?.Message ?? ex.Message);
-                ConsecutivePingFailures++;
-            }
-            Updated?.Invoke();
-            try { await Task.Delay(1000, ct); } catch (OperationCanceledException) { return; }
-        }
-    }
 
     private async Task PortLoop(CancellationToken ct)
     {
@@ -92,7 +57,7 @@ public sealed class DeviceProber : IAsyncDisposable
     public async ValueTask DisposeAsync()
     {
         _cts.Cancel();
-        try { await Task.WhenAll(_pingLoop, _portLoop); } catch { /* cancelled */ }
+        try { await _portLoop; } catch { /* cancelled */ }
         _cts.Dispose();
     }
 }
