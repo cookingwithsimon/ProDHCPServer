@@ -45,6 +45,8 @@ public sealed class ServerController : IAsyncDisposable
     public string? ServerError { get; private set; }
     public string? ServerErrorDetail { get; private set; }
     public DateTimeOffset? LinkUpSince { get; private set; }
+    public TimeSpan? ReceiveStalledFor => _receiveWatch.StalledFor;
+    private readonly ReceiveWatch _receiveWatch = new();
 
     /// <summary>Raised whenever something the status panel shows has changed. Worker thread.</summary>
     public event Action? Changed;
@@ -61,6 +63,7 @@ public sealed class ServerController : IAsyncDisposable
         ServerError = null;
         ServerErrorDetail = null;
         OtherServer = null;
+        _receiveWatch.Reset();
         _overrideOtherServer = false;
 
         // Passive check before touching anything: did Windows just get an address from a DHCP server on this port?
@@ -130,6 +133,22 @@ public sealed class ServerController : IAsyncDisposable
                     Changed?.Invoke();
                 }
                 linkWasUp = linkUp;
+
+                bool wasStalled = _receiveWatch.StalledFor is not null;
+                var stalled = _receiveWatch.Update(DateTimeOffset.Now, linkUp, adapter?.BytesReceived, adapter?.BytesSent);
+                if (stalled is not null && !wasStalled)
+                {
+                    var hint = adapter is not null && AdapterRules.KnownDriverProblem(adapter) is { } problem ? $" {problem}" : "";
+                    _log.Add(LogSeverity.Error, LogCategory.Adapter,
+                        $"\"{initial.Name}\" has received nothing for {(int)stalled.Value.TotalSeconds} s although the link is up and this laptop kept sending.{hint}",
+                        adapter?.Driver is { } d ? $"Driver: {d} ({d.HardwareId})" : null);
+                    Changed?.Invoke();
+                }
+                else if (stalled is null && wasStalled && linkUp)
+                {
+                    _log.Add(LogSeverity.Info, LogCategory.Adapter, $"\"{initial.Name}\" is receiving again.");
+                    Changed?.Invoke();
+                }
 
                 if (linkUp && ipReady && _socket is null)
                 {
@@ -253,6 +272,7 @@ public sealed class ServerController : IAsyncDisposable
         CheckingForOtherServers = false;
         ListeningSince = null;
         LinkUpSince = null;
+        _receiveWatch.Reset();
         Changed?.Invoke();
         return result;
     }

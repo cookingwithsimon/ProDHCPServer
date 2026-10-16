@@ -43,6 +43,8 @@ public sealed record StatusInputs
     public DateTimeOffset? SessionStartedAt { get; init; }
     /// <summary>When the link last came up (null while down).</summary>
     public DateTimeOffset? LinkUpSince { get; init; }
+    /// <summary>Set when the adapter has received nothing for a while although this laptop kept sending.</summary>
+    public TimeSpan? ReceiveStalledFor { get; init; }
 
     public bool ServerListening { get; init; }
     public DateTimeOffset? ListeningSince { get; init; }
@@ -128,8 +130,14 @@ public static class StatusChain
             return new(StepId.Adapter, title, StepState.Warning,
                 $"{a.Name} is selected. A VPN (\"{vpn.Name}\") is connected; some VPNs block local traffic.",
                 "If the device doesn't respond, disconnect the VPN.", detail);
+        if (a.Driver is { } driver) detail += $", driver {driver}";
+        if (AdapterRules.KnownDriverProblem(a) is { } driverProblem && s.Ping?.Success != true)
+            return new(StepId.Adapter, title, StepState.Warning, $"{a.Name} is selected. {driverProblem}", UpdateDriverAction, detail);
         return new(StepId.Adapter, title, StepState.Good, $"{a.Name} ({a.Description})", Detail: detail);
     }
+
+    private const string UpdateDriverAction =
+        "Install the newer driver: Windows Settings > Windows Update > Advanced options > Optional updates > Driver updates, tick the Realtek one only. Or use a USB adapter with a different chip.";
 
     private static string IPv4Cidr(StatusInputs s) => Net.IPv4.ToCidr(s.Config.ServerIp, s.Config.PrefixLength);
 
@@ -141,6 +149,18 @@ public static class StatusChain
         if (!a.MediaConnected)
             return new(StepId.Link, title, StepState.Bad, "No link. Windows sees no cable connected.",
                 "Check the cable is seated at both ends, the device is powered on, and try a known-good cable or a different port.");
+        if (s.ReceiveStalledFor is { } quiet)
+        {
+            var secs = (int)quiet.TotalSeconds;
+            var fix = AdapterRules.KnownDriverProblem(a) is not null
+                ? $"Unplug the USB network adapter from the laptop and plug it back in. To stop it happening again: {UpdateDriverAction}"
+                : "Unplug the USB network adapter from the laptop and plug it back in. If it keeps happening, update the adapter's driver or use a different adapter.";
+            if (s.FocusLease is not null || s.Leases.Any(l => l.State == LeaseState.Bound))
+                return new(StepId.Link, title, StepState.Bad,
+                    $"The cable shows connected, but {a.Name} has received nothing for {secs} s while this laptop kept sending. The adapter has probably stopped receiving.", fix);
+            return new(StepId.Link, title, StepState.Warning,
+                $"The cable shows connected, but {a.Name} has received nothing for {secs} s. Either the device isn't sending anything, or the adapter has stopped receiving.", fix);
+        }
         var speed = $"{a.SpeedText}, {a.DuplexText}";
         if (a.FullDuplex == false || a.SpeedBitsPerSecond is > 0 and <= 10_000_000)
             return new(StepId.Link, title, StepState.Warning, $"Link up at {speed}. That is slower than expected.",
@@ -289,6 +309,9 @@ public static class StatusChain
         var webUp = s.WebUi is { } w && (w.HttpOpen || w.HttpsOpen);
         if (webUp)
             return new(StepId.Ping, title, StepState.Warning, $"{focus.Ip} doesn't answer ping, but its web server does. It probably just blocks ping.");
+        if (s.ReceiveStalledFor is not null)
+            return new(StepId.Ping, title, StepState.Bad, $"No ping reply from {focus.Ip}, because nothing at all is being received on this adapter.",
+                "See the Cable / link step: the adapter has stopped receiving.", s.Ping.Detail);
         if (s.ConsecutivePingFailures >= 10)
             return new(StepId.Ping, title, StepState.Bad, $"{focus.Ip} has an address but isn't answering ping.",
                 "It may still be booting. If it stays red, a firewall on the device may block ping; check the WebUI step.", s.Ping.Detail);

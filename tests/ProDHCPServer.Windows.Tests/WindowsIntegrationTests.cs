@@ -48,6 +48,10 @@ public class WindowsIntegrationTests(Xunit.Abstractions.ITestOutputHelper output
         Assert.NotEqual(MacAddress.Empty, primary.Mac);
         Assert.True(primary.SpeedBitsPerSecond > 0);
         Assert.InRange(address.PrefixLength, 1, 32);
+        Assert.True(primary.BytesReceived > 0, "Expected interface byte counters on the primary adapter.");
+        Assert.NotNull(primary.BytesSent);
+        output.WriteLine($"{primary.Name}: {primary.Description}, driver {primary.Driver?.ToString() ?? "(not found)"} [{primary.Driver?.HardwareId}], rx {primary.BytesReceived} tx {primary.BytesSent}");
+        Assert.NotNull(primary.Driver);
     }
 
     [WindowsFact]

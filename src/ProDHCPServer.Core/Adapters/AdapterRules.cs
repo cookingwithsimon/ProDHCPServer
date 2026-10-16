@@ -19,6 +19,22 @@ public static class AdapterRules
     ];
 
     /// <summary>
+    /// Plain-English warning for adapter/driver combinations known to stop receiving while the link
+    /// stays up, or null. Currently: Realtek RTL8152/8153 USB adapters on drivers older than 2019
+    /// (including Windows' own 2015 inbox driver).
+    /// </summary>
+    public static string? KnownDriverProblem(AdapterInfo adapter)
+    {
+        var d = adapter.Driver;
+        var hw = d?.HardwareId?.ToUpperInvariant() ?? "";
+        bool realtekUsb = hw.Contains("VID_0BDA&PID_8153") || hw.Contains("VID_0BDA&PID_8152")
+            || adapter.Description.Contains("Realtek USB GbE", StringComparison.OrdinalIgnoreCase)
+            || adapter.Description.Contains("Realtek USB FE", StringComparison.OrdinalIgnoreCase);
+        if (!realtekUsb || d?.Date is not { } date || date >= new DateOnly(2019, 1, 1)) return null;
+        return $"This Realtek USB adapter is on an old driver ({d}). On old drivers these adapters are known to stop receiving after a few seconds while still showing connected.";
+    }
+
+    /// <summary>
     /// Classifies from Windows' interface type plus name/description keywords.
     /// <paramref name="interfaceType"/> is the NetworkInterfaceType name (Ethernet, Wireless80211, Ppp, Tunnel...).
     /// </summary>

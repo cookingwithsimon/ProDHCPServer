@@ -41,6 +41,10 @@ public sealed record AdapterInfo
     public IPAddress? DhcpServer { get; init; }
     /// <summary>Addresses Windows found to be duplicated on the link (DAD failed).</summary>
     public IReadOnlyList<IPAddress> DuplicateAddresses { get; init; } = [];
+    /// <summary>Interface byte counters since the adapter appeared; null when Windows doesn't report them.</summary>
+    public long? BytesReceived { get; init; }
+    public long? BytesSent { get; init; }
+    public AdapterDriver? Driver { get; init; }
 
     public bool HasAddress(IPAddress ip) => Addresses.Any(a => a.Address.Equals(ip));
     public bool HasOnlyApipa => Addresses.Count > 0 && Addresses.All(a => IPv4.IsApipa(a.Address));
@@ -57,6 +61,16 @@ public sealed record AdapterInfo
 
     public string AddressSummary =>
         Addresses.Count == 0 ? "no IPv4 address" : string.Join(", ", Addresses.Select(a => a.ToString()));
+}
+
+/// <summary>The installed driver, as Windows records it. Any field may be missing.</summary>
+public sealed record AdapterDriver(string? Provider, string? Version, DateOnly? Date, string? HardwareId)
+{
+    public override string ToString()
+    {
+        var parts = new[] { Provider, Version, Date?.ToString("yyyy-MM-dd") }.Where(p => !string.IsNullOrWhiteSpace(p));
+        return string.Join(" ", parts);
+    }
 }
 
 /// <summary>

@@ -27,6 +27,7 @@ Tick each box. If something fails, open the **Session log**, select the red line
 - [ ] Plug in. Steps 2–4 turn green by themselves; the device gets a lease.
 - [ ] While running, unplug for ~10 s and replug. The server comes back by itself and re-checks for other DHCP servers.
 - [ ] A device with a static IP (or DHCP off): after 30 s step 5 is amber, saying no requests were seen and it may have a static IP.
+- [ ] Old Realtek USB adapter ("Realtek USB GbE", Windows' 2015 driver), if you have one: step 1 is amber, naming the old driver and how to update it. If the adapter stalls (link up, nothing received), step 2 turns amber or red within about 20 s, says nothing is being received, and tells you to replug the adapter; the session log says the same.
 
 ## 4. Several devices through a switch
 - [ ] Two or three devices on a small switch. Each gets its own address; all appear under **All devices**.
