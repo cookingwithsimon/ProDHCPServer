@@ -157,6 +157,18 @@ public sealed class AdapterSessionManager(IAdapterControl adapters, ISessionStor
         }
     }
 
+    /// <summary>Removes a temporary address before Stop. It stays in the backup until Windows has removed it.</summary>
+    public void RemoveTemporaryAddress(IPAddress address)
+    {
+        lock (_gate)
+        {
+            var active = _active ?? throw new InvalidOperationException("No session is running.");
+            adapters.RemoveAddress(active.Snapshot.AdapterId, address);
+            _active = active with { TemporaryAddresses = active.TemporaryAddresses.Where(t => !t.Address.Equals(address)).ToList() };
+            store.Save(_active);
+        }
+    }
+
     /// <summary>Puts the adapter back and verifies it. The backup is only deleted once that succeeds.</summary>
     public RestoreResult End()
     {

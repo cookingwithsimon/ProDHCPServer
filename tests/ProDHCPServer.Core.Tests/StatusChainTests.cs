@@ -165,6 +165,16 @@ public class StatusChainTests
     }
 
     [Fact]
+    public void No_requests_but_a_static_device_was_found_says_where_it_is()
+    {
+        var found = new Discovery.DiscoveredDevice { Id = 1, Ip = IPv4.Parse("192.168.254.254"), Model = "IN1606" };
+        var step = Step(Running(s => s with { Now = T0.AddSeconds(31), FoundOnOtherSubnets = [found] }), StepId.Traffic);
+        Assert.Equal(StepState.Warning, step.State);
+        Assert.Equal("No DHCP requests in 31 s, but 192.168.254.254 (IN1606) is on the cable with a static IP.", step.Reason);
+        Assert.Contains("Reach it", step.Action);
+    }
+
+    [Fact]
     public void Under_30s_is_just_listening()
     {
         var step = Step(Running(s => s with { Now = T0.AddSeconds(10) }), StepId.Traffic);

@@ -405,6 +405,80 @@
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
                             </StackPanel>
+
+                            <!-- Found on the network: the static IP finder and discovery, while the server runs -->
+                            <StackPanel Margin="0,32,0,0" Visibility="{Binding IsRunning, Converter={StaticResource VisibleWhen}}">
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                    <TextBlock FontSize="{StaticResource TextBody}" Style="{StaticResource Primary}" VerticalAlignment="Center" TextWrapping="Wrap">
+                                        <Run Text="Found on the network" FontWeight="SemiBold" /><Run Text="   " /><Run Text="{Binding FoundCountText, Mode=OneWay}" Foreground="{DynamicResource TextMuted}" />
+                                    </TextBlock>
+                                    <Button Grid.Column="1" Style="{StaticResource SecondaryButton}" Command="{Binding SweepCommand}" Margin="16,0,0,0"
+                                            ToolTip="Looks for devices with static IPs on this laptop's subnet, the brand presets' subnets and any subnet a device was seen on. Uses a temporary address on each, removed afterwards.">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="&#xE721;" FontFamily="{StaticResource IconFont}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                            <TextBlock Text="Scan for static IPs" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </Button>
+                                </Grid>
+                                <TextBlock Text="{Binding SweepStatus}" Style="{StaticResource Meta}" Margin="0,0,0,8" TextWrapping="Wrap"
+                                           Visibility="{Binding SweepStatus, Converter={StaticResource VisibleWhen}}" AutomationProperties.LiveSetting="Polite" />
+
+                                <!-- Which switch port the laptop is on (LLDP/CDP via Npcap) -->
+                                <TextBlock FontSize="{StaticResource TextBody}" Style="{StaticResource Primary}" Margin="0,0,0,8" TextWrapping="Wrap"
+                                           Visibility="{Binding SwitchPortText, Converter={StaticResource VisibleWhen}}" ToolTip="{Binding SwitchPortDetail}">
+                                    <Run Text="&#xE839;" FontFamily="{StaticResource IconFont}" /><Run Text="  " /><Run Text="{Binding SwitchPortText, Mode=OneWay}" />
+                                </TextBlock>
+                                <TextBlock Text="{Binding DiscoveryNote}" Style="{StaticResource Meta}" Margin="0,0,0,8" TextWrapping="Wrap"
+                                           Visibility="{Binding DiscoveryNote, Converter={StaticResource VisibleWhen}}" />
+                                <TextBlock Style="{StaticResource Meta}" Margin="0,0,0,8" TextWrapping="Wrap"
+                                           Visibility="{Binding NpcapMissing, Converter={StaticResource VisibleWhen}}">
+                                    <Run Text="Install Npcap to see which switch port you're plugged into and to catch quiet devices as they power up." />
+                                    <Hyperlink Command="{Binding GetNpcapCommand}" Foreground="{DynamicResource TextPrimary}" ToolTip="https://npcap.com">Get Npcap</Hyperlink>
+                                </TextBlock>
+
+                                <TextBlock Style="{StaticResource Secondary}" FontSize="{StaticResource TextBody}" TextWrapping="Wrap" Margin="0,0,0,8"
+                                           Text="Listening for devices. A device with a static IP shows up here when it sends anything, or press Scan for static IPs."
+                                           Visibility="{Binding Found.Count, Converter={StaticResource VisibleWhen}, ConverterParameter=Invert}" />
+
+                                <ItemsControl ItemsSource="{Binding Found}" AutomationProperties.Name="Found on the network">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="{x:Type vm:FoundDeviceViewModel}">
+                                            <Border Margin="0,0,0,4" Padding="16,12" Background="{DynamicResource RaisedBg}" ToolTip="{Binding Detail}">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <Ellipse Width="12" Height="12" Margin="0,6,16,0" VerticalAlignment="Top" Fill="{Binding StateColour, Converter={StaticResource StateBrush}}" />
+                                                    <StackPanel Grid.Column="1" Typography.NumeralAlignment="Tabular">
+                                                        <TextBlock FontSize="{StaticResource TextBody}" Style="{StaticResource Primary}" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap">
+                                                            <Run Text="{Binding Ip, Mode=OneWay}" FontWeight="SemiBold" /><Run Text="   " /><Run Text="{Binding Title, Mode=OneWay}" />
+                                                        </TextBlock>
+                                                        <TextBlock Text="{Binding Subtitle}" Style="{StaticResource Meta}" TextTrimming="CharacterEllipsis" />
+                                                        <TextBlock Text="{Binding RelationText}" Style="{StaticResource Meta}" TextWrapping="Wrap"
+                                                                   Foreground="{Binding StateColour, Converter={StaticResource StateBrush}}" />
+                                                    </StackPanel>
+                                                    <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="16,0,0,0" VerticalAlignment="Center">
+                                                        <Button Content="Reach it" Style="{StaticResource AccentButton}"
+                                                                Command="{Binding DataContext.ReachCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}"
+                                                                IsEnabled="{Binding IsIdle}"
+                                                                Visibility="{Binding IsReachable, Converter={StaticResource VisibleWhen}, ConverterParameter=Invert}"
+                                                                ToolTip="Adds an address on this device's subnet to your adapter until Stop, so you can open its WebUI"
+                                                                AutomationProperties.Name="{Binding Ip, StringFormat='Reach {0}'}" />
+                                                        <Button Content="Open WebUI" Style="{StaticResource SecondaryButton}"
+                                                                Command="{Binding DataContext.OpenFoundCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}"
+                                                                Visibility="{Binding IsReachable, Converter={StaticResource VisibleWhen}}"
+                                                                AutomationProperties.Name="{Binding Ip, StringFormat='Open the WebUI of {0}'}" />
+                                                        <Button Style="{StaticResource IconButton}" Content="&#xE8C8;" Width="40" Height="40" Margin="8,0,0,0"
+                                                                Command="{Binding DataContext.CopyTextCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding Ip}"
+                                                                ToolTip="Copy IP address" AutomationProperties.Name="Copy IP address" />
+                                                    </StackPanel>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
                         </StackPanel>
                     </ScrollViewer>
                 </Border>

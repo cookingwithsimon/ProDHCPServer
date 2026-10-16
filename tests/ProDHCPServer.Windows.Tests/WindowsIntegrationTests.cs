@@ -201,7 +201,11 @@ public class WindowsIntegrationTests(Xunit.Abstractions.ITestOutputHelper output
         Firewall.Allow();
         var shown = CommandRunner.Run("netsh.exe", ["advfirewall", "firewall", "show", "rule", $"name={Firewall.RuleName}"]);
         Assert.Contains("67,68", shown.Output);
+        var discovery = CommandRunner.Run("netsh.exe", ["advfirewall", "firewall", "show", "rule", $"name={Firewall.DiscoveryRuleName}"]);
+        Assert.Contains(Firewall.DiscoveryRuleName, discovery.Output);
         Firewall.Remove();
+        var discoveryGone = CommandRunner.Run("netsh.exe", ["advfirewall", "firewall", "show", "rule", $"name={Firewall.DiscoveryRuleName}"]);
+        Assert.DoesNotContain("Enabled:", discoveryGone.Output);
         var gone = CommandRunner.Run("netsh.exe", ["advfirewall", "firewall", "show", "rule", $"name={Firewall.RuleName}"]);
         Assert.DoesNotContain("67,68", gone.Output);
     }
@@ -253,5 +257,55 @@ public class WindowsIntegrationTests(Xunit.Abstractions.ITestOutputHelper output
         // Dropping the device stops its pinger.
         monitor.Sync([]);
         Assert.Null(monitor.History(mac));
+    }
+
+    [WindowsFact]
+    public void Arp_table_reads_and_resolves_the_gateway()
+    {
+        var (adapter, address) = PrimaryAdapter();
+        var gateway = adapter.Gateways[0];
+        var mac = WindowsArp.Probe(gateway, address.Address);
+        output.WriteLine($"Gateway {gateway} is at {mac?.ToString() ?? "no answer"}");
+        var entries = WindowsArp.Read(adapter.Index);
+        output.WriteLine(string.Join(Environment.NewLine, entries.Select(e => $"{e.Ip} {e.Mac}")));
+        Assert.All(entries, e => Assert.Equal(adapter.Index, e.InterfaceIndex));
+        if (mac is not null) Assert.Contains(entries, e => e.Ip.Equals(gateway));
+    }
+
+    [WindowsFact]
+    public void Npcap_check_never_throws()
+    {
+        output.WriteLine($"Npcap installed: {NpcapCapture.IsInstalled}");
+        if (!NpcapCapture.IsInstalled) Assert.Equal("Npcap isn't installed.", new NpcapCapture("{00000000-0000-0000-0000-000000000000}", _ => { }).Start());
+    }
+
+    [AdminFact]
+    public async Task Discovery_socket_and_raw_sniffer_receive_a_pjlink_reply()
+    {
+        var (_, address) = PrimaryAdapter();
+        var received = new TaskCompletionSource<Core.Discovery.Sighting>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var sniffed = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        await using var socket = DiscoverySocket.Open(address.Address, 0, [], 1, (from, port, buffer, length) =>
+        {
+            if (Core.Discovery.VendorProtocols.TryParse(DateTimeOffset.Now, from.Address, 4352, port, buffer.AsSpan(0, length)) is { } s) received.TrySetResult(s);
+        });
+        await using var sniffer = new RawIpSniffer(address.Address, (buffer, length) =>
+        {
+            if (Core.Discovery.IPv4Packet.TryParse(buffer.AsSpan(0, length), out var ip) && ip.TryGetUdp(out _, out int dp, out _) && dp == socket.LocalPort) sniffed.TrySetResult(true);
+        });
+        var problem = sniffer.Start();
+        output.WriteLine($"Sniffer: {problem ?? "listening"}");
+
+        using var sender = new UdpClient(new IPEndPoint(address.Address, 0));
+        var reply = "%2ACKN=00:0b:a2:11:22:33\r"u8.ToArray();
+        for (int i = 0; i < 5 && !received.Task.IsCompleted; i++)
+        {
+            await sender.SendAsync(reply, new IPEndPoint(address.Address, socket.LocalPort));
+            await Task.WhenAny(received.Task, Task.Delay(500));
+        }
+        var sighting = await received.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.Equal("PJLink", sighting.Label);
+        Assert.Equal(MacAddress.Parse("00:0B:A2:11:22:33"), sighting.Mac);
+        if (problem is null) output.WriteLine($"Sniffer saw it: {await Task.WhenAny(sniffed.Task, Task.Delay(2000)) == sniffed.Task}");
     }
 }

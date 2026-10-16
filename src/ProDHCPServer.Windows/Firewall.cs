@@ -9,8 +9,12 @@ namespace ProDHCPServer.Windows;
 public static class Firewall
 {
     public const string RuleName = "ProDHCPServer (DHCP)";
+    public const string DiscoveryRuleName = "ProDHCPServer (discovery)";
 
-    /// <summary>Allows inbound UDP 67 (server) and 68 (other-server probe) for this exe. Idempotent.</summary>
+    /// <summary>
+    /// Allows inbound UDP 67 (server) and 68 (other-server probe), plus device discovery (mDNS, UPnP, vendor
+    /// protocols and broadcasts from devices on other subnets) on wired adapters, all for this exe only. Idempotent.
+    /// </summary>
     public static void Allow()
     {
         var exe = Environment.ProcessPath ?? throw new InvalidOperationException("Can't find this program's path.");
@@ -19,12 +23,17 @@ public static class Firewall
             "advfirewall", "firewall", "add", "rule", $"name={RuleName}", "dir=in", "action=allow",
             $"program={exe}", "protocol=UDP", "localport=67,68", "profile=any", "enable=yes",
             "description=Added by ProDHCPServer while serving DHCP; removed when it stops.");
+        CommandRunner.Netsh("add a Windows Firewall rule for finding devices",
+            "advfirewall", "firewall", "add", "rule", $"name={DiscoveryRuleName}", "dir=in", "action=allow",
+            $"program={exe}", "protocol=any", "interfacetype=lan", "profile=any", "enable=yes",
+            "description=Added by ProDHCPServer while it looks for devices on a wired adapter; removed when it stops.");
     }
 
     public static void Remove()
     {
         // "No rules match" is fine.
         CommandRunner.Run("netsh.exe", ["advfirewall", "firewall", "delete", "rule", $"name={RuleName}"]);
+        CommandRunner.Run("netsh.exe", ["advfirewall", "firewall", "delete", "rule", $"name={DiscoveryRuleName}"]);
     }
 }
 

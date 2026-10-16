@@ -30,7 +30,11 @@ public sealed class ServerController : IAsyncDisposable
         _sessions = sessions;
         _log = log;
         _appVersion = appVersion;
+        Discovery = new DiscoveryService(adapters, sessions, log);
     }
+
+    /// <summary>The static IP finder and device discovery; runs while the server's address is on the adapter.</summary>
+    public DiscoveryService Discovery { get; }
 
     public bool IsActive { get; private set; }
     public string? AdapterId { get; private set; }
@@ -75,7 +79,7 @@ public sealed class ServerController : IAsyncDisposable
             _log.Add(LogSeverity.Error, LogCategory.Server, $"Another DHCP server ({dhcpServer}) already gave this laptop {current} on \"{adapter.Name}\". Not serving.");
         }
 
-        try { Firewall.Allow(); _log.Add(LogSeverity.Info, LogCategory.App, "Windows Firewall rule added for UDP 67/68."); }
+        try { Firewall.Allow(); _log.Add(LogSeverity.Info, LogCategory.App, "Windows Firewall rules added for DHCP (UDP 67/68) and finding devices."); }
         catch (AdapterOperationException ex) { _log.Add(LogSeverity.Warning, LogCategory.App, $"{ex.Message} Devices may not be able to reach the server.", ex.Detail); }
 
         var record = _sessions.Begin(adapter.Id, config.ServerIp, config.PrefixLength, _appVersion);
@@ -123,6 +127,7 @@ public sealed class ServerController : IAsyncDisposable
                     // The cable may now be in a different network: forget the old result and check again.
                     if (!_overrideOtherServer) OtherServer = null;
                     _log.Add(LogSeverity.Info, LogCategory.Adapter, $"Link up on \"{initial.Name}\" ({adapter!.SpeedText}, {adapter.DuplexText}).");
+                    Discovery.Kick();
                     Changed?.Invoke();
                 }
                 else if (!linkUp && linkWasUp)
@@ -130,9 +135,16 @@ public sealed class ServerController : IAsyncDisposable
                     LinkUpSince = null;
                     _log.Add(LogSeverity.Warning, LogCategory.Adapter, adapter is null ? $"\"{initial.Name}\" disappeared (USB adapter unplugged?)." : $"Link down on \"{initial.Name}\".");
                     await StopSocket();
+                    Discovery.LinkDown();
                     Changed?.Invoke();
                 }
                 linkWasUp = linkUp;
+
+                if (linkUp && ipReady && !Discovery.Running)
+                {
+                    Discovery.IsDhcpClient = ip => engine.GetLeases().Any(l => l.Ip.Equals(ip));
+                    Discovery.Start(adapter!, engine.Config.ServerIp);
+                }
 
                 bool wasStalled = _receiveWatch.StalledFor is not null;
                 var stalled = _receiveWatch.Update(DateTimeOffset.Now, linkUp, adapter?.BytesReceived, adapter?.BytesSent);
@@ -253,6 +265,8 @@ public sealed class ServerController : IAsyncDisposable
         _cts?.Cancel();
         if (_supervisor is not null) { try { await _supervisor; } catch { /* already logged */ } }
         await StopSocket();
+        // Before the restore, so a scan in progress removes its temporary address first.
+        try { await Discovery.StopAsync(); } catch (Exception ex) { _log.Add(LogSeverity.Warning, LogCategory.Device, $"Stopping device discovery: {ex.Message}", ex.ToString()); }
         _supervisor = null;
         _cts?.Dispose();
         _cts = null;
@@ -281,6 +295,7 @@ public sealed class ServerController : IAsyncDisposable
     public RestoreResult EmergencyRestore()
     {
         try { _cts?.Cancel(); } catch { }
+        try { Discovery.Abort(); } catch { }
         try { _socket?.DisposeAsync().AsTask().Wait(2000); } catch { }
         try { Firewall.Remove(); } catch { }
         try { return _sessions.End(); }
