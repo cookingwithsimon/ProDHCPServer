@@ -1,0 +1,90 @@
+name: Build and test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write # only used to push the ci-screenshots branch
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore ProDHCPServer.sln
+
+      - name: Build
+        run: dotnet build ProDHCPServer.sln -c Debug --no-restore
+
+      - name: Core tests (DHCP, backup/restore, status rules)
+        run: dotnet test tests/ProDHCPServer.Core.Tests --no-build --logger "trx;LogFileName=core.trx" --results-directory TestResults
+
+      - name: Windows integration tests (sockets, ARP, firewall; no adapter changes)
+        run: dotnet test tests/ProDHCPServer.Windows.Tests --no-build --logger "trx;LogFileName=windows.trx" --results-directory TestResults
+
+      - name: List integration test results
+        if: always()
+        shell: pwsh
+        run: |
+          [xml]$trx = Get-Content TestResults/windows.trx
+          New-Item -ItemType Directory -Force -Path screenshots | Out-Null
+          $lines = @()
+          $lines += $trx.TestRun.Results.UnitTestResult | ForEach-Object { "{0,-8} {1,-12} {2}" -f $_.outcome, $_.duration, $_.testName }
+          $lines += $trx.TestRun.Results.UnitTestResult | Where-Object { $_.Output.StdOut } | ForEach-Object { "--- $($_.testName)"; $_.Output.StdOut }
+          $lines | Tee-Object -FilePath screenshots/windows-tests.txt
+
+      - name: Publish single-file exe
+        shell: pwsh
+        run: |
+          $version = "0.1.${{ github.run_number }}"
+          dotnet publish src/ProDHCPServer.App -c Release -r win-x64 -p:Version=$version -o publish
+          Get-ChildItem publish
+
+      - name: Smoke test (launch, screenshot light and dark, close)
+        shell: pwsh
+        run: tools/smoke-test.ps1 -Exe publish/ProDHCPServer.exe -OutDir screenshots
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ProDHCPServer-win-x64
+          path: publish/ProDHCPServer.exe
+          if-no-files-found: error
+
+      # Keep the latest screenshots on a throwaway branch so they can be viewed without downloading artifacts.
+      - name: Publish screenshots to the ci-screenshots branch
+        if: always() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+        shell: pwsh
+        run: |
+          if (-not (Test-Path screenshots)) { exit 0 }
+          $src = (Resolve-Path screenshots).Path
+          $dir = Join-Path $env:RUNNER_TEMP "shots"
+          git init -q -b ci-screenshots $dir
+          Copy-Item "$src/*" $dir
+          Set-Content "$dir/README.md" "Screenshots from CI run ${{ github.run_id }} on ${{ github.head_ref || github.ref_name }} @ ${{ github.sha }}. Overwritten on every run."
+          git -C $dir add -A
+          git -C $dir -c user.name="github-actions" -c user.email="github-actions@users.noreply.github.com" commit -q -m "CI screenshots for run ${{ github.run_id }}"
+          git -C $dir push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" ci-screenshots
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: screenshots
+          path: screenshots/
+          if-no-files-found: ignore
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: TestResults/
+          if-no-files-found: ignore
