@@ -1,10 +1,17 @@
 name: Release
 
-# Push a tag like v1.0.0 to build the exe and create a draft GitHub Release with it.
-# The draft stays private until someone presses Publish on the Releases page.
+# Push a tag like v1.0.0, or run this workflow from the Actions tab with a version, to build
+# the exe and create a draft GitHub Release with it. The draft stays private until someone
+# presses Publish on the Releases page; when started from the Actions tab, publishing also
+# creates the tag on the commit that was built.
 on:
   push:
     tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Version tag to release, for example v1.0.0
+        required: true
 
 permissions:
   contents: write # create the draft release and upload its files
@@ -13,6 +20,8 @@ jobs:
   release:
     runs-on: windows-latest
     timeout-minutes: 30
+    env:
+      TAG: ${{ inputs.tag || github.ref_name }}
     steps:
       - uses: actions/checkout@v4
 
@@ -24,7 +33,7 @@ jobs:
         id: version
         shell: pwsh
         run: |
-          $tag = "${{ github.ref_name }}"
+          $tag = $env:TAG
           if ($tag -notmatch '^v(\d+\.\d+\.\d+)$') { throw "Tag '$tag' must look like v1.2.3" }
           "version=$($Matches[1])" >> $env:GITHUB_OUTPUT
           if (-not (Test-Path ".github/release-notes/$tag.md")) { throw "Add .github/release-notes/$tag.md before tagging" }
@@ -51,7 +60,7 @@ jobs:
       - name: Name the exe and write its SHA-256 checksum
         shell: pwsh
         run: |
-          $name = "ProDHCPServer-${{ github.ref_name }}-win-x64.exe"
+          $name = "ProDHCPServer-$($env:TAG)-win-x64.exe"
           New-Item -ItemType Directory -Force -Path dist | Out-Null
           Copy-Item publish/ProDHCPServer.exe "dist/$name"
           $hash = (Get-FileHash "dist/$name" -Algorithm SHA256).Hash.ToLowerInvariant()
@@ -64,20 +73,20 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          $tag = "${{ github.ref_name }}"
+          $tag = $env:TAG
           $files = (Get-ChildItem dist).FullName
           gh release view $tag *> $null
           if ($LASTEXITCODE -eq 0) {
             gh release upload $tag @files --clobber
           } else {
-            gh release create $tag @files --draft --verify-tag --title "ProDHCPServer $tag" --notes-file ".github/release-notes/$tag.md"
+            gh release create $tag @files --draft --target ${{ github.sha }} --title "ProDHCPServer $tag" --notes-file ".github/release-notes/$tag.md"
           }
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: release-${{ github.ref_name }}
+          name: release-${{ env.TAG }}
           path: |
             dist/
             screenshots/
