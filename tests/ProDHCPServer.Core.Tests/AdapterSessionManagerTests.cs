@@ -297,6 +297,20 @@ public class AdapterSessionManagerTests
     }
 
     [Fact]
+    public void A_temporary_address_removed_early_is_dropped_from_the_backup()
+    {
+        _adapters.Add("eth", "Ethernet");
+        _manager.Begin("eth", ServerIp, 24);
+        _manager.AddTemporaryAddress(IPv4.Parse("192.168.1.249"), 24);
+        _manager.AddTemporaryAddress(IPv4.Parse("192.168.0.249"), 24);
+
+        _manager.RemoveTemporaryAddress(IPv4.Parse("192.168.1.249"));
+
+        Assert.Contains("remove 192.168.1.249", _adapters.Calls);
+        Assert.Equal([new AddressAssignment(IPv4.Parse("192.168.0.249"), 24)], _store.Record!.TemporaryAddresses);
+    }
+
+    [Fact]
     public void Cannot_start_twice()
     {
         _adapters.Add("eth", "Ethernet");

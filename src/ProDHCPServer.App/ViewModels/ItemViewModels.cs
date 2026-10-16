@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using ProDHCPServer.Core;
 using ProDHCPServer.Core.Adapters;
 using ProDHCPServer.Core.Devices;
+using ProDHCPServer.Core.Discovery;
 using ProDHCPServer.Core.Dhcp;
 using ProDHCPServer.Core.Net;
 using ProDHCPServer.Core.Status;
@@ -136,6 +137,51 @@ public sealed partial class DeviceViewModel : ObservableObject
     }
 
     public static string Ago(TimeSpan t) => Duration(t);
+}
+
+/// <summary>A device the static IP finder or discovery found, which has no DHCP lease from this server.</summary>
+public sealed partial class FoundDeviceViewModel : ObservableObject
+{
+    public FoundDeviceViewModel(int id) => Id = id;
+
+    public int Id { get; }
+    public DiscoveredDevice? Device { get; private set; }
+
+    [ObservableProperty] private string _ip = "";
+    [ObservableProperty] private string _title = "";
+    [ObservableProperty] private string _subtitle = "";
+    [ObservableProperty] private string _relationText = "";
+    [ObservableProperty] private string? _detail;
+    [ObservableProperty] private bool _isReachable;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsIdle))]
+    private bool _isBusy;
+    [ObservableProperty] private StepState _stateColour;
+
+    public bool IsIdle => !IsBusy;
+
+    public void Update(DiscoveredDevice d, IReadOnlyList<AddressAssignment> local)
+    {
+        Device = d;
+        Ip = d.Ip.ToString();
+        var vendor = d.Manufacturer ?? (d.Mac is { } mac ? OuiDatabase.Default.Lookup(mac) : null);
+        Title = d.Name ?? d.Model ?? vendor ?? "Unknown device";
+        var parts = new List<string>();
+        if (d.Model is { } model && model != Title) parts.Add(model);
+        if (vendor is not null && vendor != Title) parts.Add(vendor);
+        if (d.Mac is { } m) parts.Add(m.ToString());
+        parts.Add($"found by {string.Join(", ", d.FoundBy)}");
+        Subtitle = string.Join("  ·  ", parts);
+        IsReachable = d.IsReachable(local);
+        RelationText = IsReachable
+            ? "This laptop can reach it"
+            : $"Static IP on {SubnetText(d.Ip)}, which this laptop isn't on yet";
+        StateColour = IsReachable ? StepState.Good : StepState.Warning;
+        Detail = d.Details.Count == 0 ? null : string.Join(Environment.NewLine, d.Details);
+    }
+
+    private static string SubnetText(System.Net.IPAddress ip) =>
+        Core.Discovery.SubnetPlanner.ReachPrefix(ip) == 16 ? "169.254.x.x (it gave itself an address)" : $"{string.Join('.', ip.ToString().Split('.')[..3])}.x";
 }
 
 public sealed class LogItemViewModel(LogEntry entry)

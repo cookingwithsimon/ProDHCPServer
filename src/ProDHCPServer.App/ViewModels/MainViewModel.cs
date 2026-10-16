@@ -91,6 +91,20 @@ public sealed partial class MainViewModel : ObservableObject, IAsyncDisposable
     public ObservableCollection<StepViewModel> Steps { get; }
     public ObservableCollection<DeviceViewModel> Devices { get; } = [];
     public ObservableCollection<LogItemViewModel> LogRows { get; } = [];
+    public ObservableCollection<FoundDeviceViewModel> Found { get; } = [];
+
+    // ---------- static IP finder and discovery ----------
+
+    [ObservableProperty] private string _foundCountText = "";
+    [ObservableProperty] private string? _switchPortText;
+    [ObservableProperty] private string? _switchPortDetail;
+    [ObservableProperty] private string? _discoveryNote;
+    [ObservableProperty] private bool _npcapMissing;
+    [ObservableProperty] private string? _sweepStatus;
+
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(SweepCommand))]
+    private bool _isSweeping;
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(StartStopCommand))]
@@ -101,7 +115,11 @@ public sealed partial class MainViewModel : ObservableObject, IAsyncDisposable
     [NotifyCanExecuteChangedFor(nameof(StartStopCommand))]
     private bool _isRunning;
 
-    partial void OnIsRunningChanged(bool value) => Settings.IsLocked = value;
+    partial void OnIsRunningChanged(bool value)
+    {
+        Settings.IsLocked = value;
+        SweepCommand.NotifyCanExecuteChanged();
+    }
 
     // ---------- session log filter ----------
 
@@ -261,6 +279,7 @@ public sealed partial class MainViewModel : ObservableObject, IAsyncDisposable
             UpdateAdapterList(list);
             IsRunning = _controller.IsActive;
             UpdateDevices();
+            UpdateFound();
             UpdateStatus();
         }
         finally
@@ -385,6 +404,7 @@ public sealed partial class MainViewModel : ObservableObject, IAsyncDisposable
             WebUi = _prober?.LastWebUi,
             ConflictingAdapters = conflicts,
             ConnectedVpns = vpns,
+            FoundOnOtherSubnets = Found.Where(f => !f.IsReachable && f.Device is not null).Select(f => f.Device!).ToList(),
         };
 
         var steps = StatusChain.Evaluate(inputs);
@@ -426,6 +446,120 @@ public sealed partial class MainViewModel : ObservableObject, IAsyncDisposable
             OtherServerDetail = null;
         }
     }
+
+    private void UpdateFound()
+    {
+        var discovery = _controller.Discovery;
+        var local = SelectedAdapter?.Info.Addresses ?? [];
+        var leases = _controller.Engine?.GetLeases() ?? [];
+        var list = discovery.Running
+            ? discovery.Table.Snapshot().Where(d => !leases.Any(l => l.Mac == d.Mac || l.Ip.Equals(d.Ip))).ToList()
+            : [];
+        foreach (var gone in Found.Where(f => list.All(d => d.Id != f.Id)).ToList()) Found.Remove(gone);
+        for (int i = 0; i < list.Count; i++)
+        {
+            var vm = Found.FirstOrDefault(f => f.Id == list[i].Id);
+            if (vm is null) { vm = new FoundDeviceViewModel(list[i].Id); Found.Insert(Math.Min(i, Found.Count), vm); }
+            else if (Found.IndexOf(vm) != i) Found.Move(Found.IndexOf(vm), Math.Min(i, Found.Count - 1));
+            vm.Update(list[i], local);
+        }
+        int elsewhere = Found.Count(f => !f.IsReachable);
+        FoundCountText = Found.Count switch
+        {
+            0 => "",
+            var n => $"{n} {(n == 1 ? "device" : "devices")}{(elsewhere > 0 ? $", {elsewhere} on another subnet" : "")}",
+        };
+        SwitchPortText = discovery.SwitchPort?.Describe();
+        SwitchPortDetail = discovery.SwitchPort?.DetailText();
+        NpcapMissing = discovery.Running && !discovery.NpcapAvailable;
+        DiscoveryNote = discovery.Running && discovery.SwitchPort is null && !NpcapMissing
+            ? "No switch port information yet. Managed switches send it about every 30 seconds (LLDP or CDP)."
+            : null;
+        SweepStatus = discovery.SweepStatus;
+        IsSweeping = discovery.Sweeping;
+    }
+
+    private bool CanSweep() => IsRunning && !IsSweeping;
+
+    /// <summary>Scans the likely AV subnets for devices with static IPs, using a temporary address on each.</summary>
+    [RelayCommand(CanExecute = nameof(CanSweep))]
+    private void Sweep()
+    {
+        _controller.Discovery.StartSweep(_allAdapters);
+        UpdateFound();
+    }
+
+    /// <summary>Adds an address on the device's subnet (until Stop) so its WebUI can be opened.</summary>
+    [RelayCommand]
+    private async Task Reach(FoundDeviceViewModel? found)
+    {
+        if (found?.Device is not { } device || found.IsBusy) return;
+        if (SelectedAdapter?.Info is not { } adapter) return;
+        int prefix = Core.Discovery.SubnetPlanner.ReachPrefix(device.Ip);
+        var clash = AdapterRules.OverlappingAdapters(_allAdapters, adapter.Id, device.Ip, prefix).FirstOrDefault();
+        if (clash is not null)
+        {
+            var ok = ConfirmDialog.Show(Application.Current.MainWindow,
+                title: $"Turn off \"{clash.Name}\" until Stop?",
+                message: $"\"{clash.Name}\" is on {clash.AddressSummary}, the same subnet as {device.Ip}. To reach the device on the cable, " +
+                         $"\"{clash.Name}\" has to be off. It's turned back on when you press Stop.",
+                confirmText: "Turn it off and continue");
+            if (!ok) return;
+            try { await Task.Run(() => _sessions.DisableForSession(clash)); Log.Add(LogSeverity.Info, LogCategory.Adapter, $"Turned off \"{clash.Name}\" until Stop."); }
+            catch (Exception ex)
+            {
+                ShowError($"Couldn't turn off \"{clash.Name}\": {ex.Message}", (ex as AdapterOperationException)?.Detail ?? ex.ToString());
+                return;
+            }
+        }
+        found.IsBusy = true;
+        try
+        {
+            await _controller.Discovery.ReachAsync(device);
+            DismissError();
+        }
+        catch (AdapterOperationException ex)
+        {
+            ShowError(ex.Message, ex.Detail);
+            Log.Add(LogSeverity.Error, LogCategory.Adapter, ex.Message, ex.Detail);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            ShowError($"Couldn't reach {device.Ip}: {ex.Message}", ex.ToString());
+        }
+        finally
+        {
+            found.IsBusy = false;
+        }
+        await RefreshAsync();
+    }
+
+    /// <summary>Opens a found device's web page: the one it advertised, else whichever of 80 and 443 answers.</summary>
+    [RelayCommand]
+    private async Task OpenFound(FoundDeviceViewModel? found)
+    {
+        if (found?.Device is not { } device) return;
+        if (!found.IsReachable) { ShowError($"Press Reach it first: this laptop isn't on {device.Ip}'s subnet yet."); return; }
+        if (device.WebPage is { } page) { OpenUrl(page.ToString()); return; }
+        found.IsBusy = true;
+        try
+        {
+            var http = DeviceProber.TcpOpen(device.Ip, 80, CancellationToken.None);
+            var https = DeviceProber.TcpOpen(device.Ip, 443, CancellationToken.None);
+            var (h, hs) = (await http, await https);
+            if (h.Open) OpenUrl($"http://{device.Ip}/");
+            else if (hs.Open) OpenUrl($"https://{device.Ip}/");
+            else ShowError($"{device.Ip} has no web page on port 80 or 443. It may only be set up with the maker's software.",
+                $"Port 80: {h.Detail}{Environment.NewLine}Port 443: {hs.Detail}");
+        }
+        finally
+        {
+            found.IsBusy = false;
+        }
+    }
+
+    [RelayCommand]
+    private void GetNpcap() => OpenUrl("https://npcap.com/#download");
 
     private Core.Devices.PingHistory? FocusedPing => FocusedDevice is { } d ? _monitor.History(d.Mac) : null;
 
@@ -539,6 +673,7 @@ public sealed partial class MainViewModel : ObservableObject, IAsyncDisposable
         }
         if (_prober is { } p) { _prober = null; await p.DisposeAsync(); }
         await _monitor.ClearAsync();
+        Found.Clear();
         await RefreshAsync();
     }
 

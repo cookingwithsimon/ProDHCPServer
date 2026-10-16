@@ -67,6 +67,9 @@ public sealed record StatusInputs
     /// <summary>Other adapters whose subnet overlaps ours (e.g. Wi-Fi on 192.168.1.0/24).</summary>
     public IReadOnlyList<AdapterInfo> ConflictingAdapters { get; init; } = [];
     public IReadOnlyList<AdapterInfo> ConnectedVpns { get; init; } = [];
+
+    /// <summary>Devices the static IP finder saw that this laptop can't reach yet (a static IP on another subnet).</summary>
+    public IReadOnlyList<Discovery.DiscoveredDevice> FoundOnOtherSubnets { get; init; } = [];
 }
 
 /// <summary>
@@ -256,6 +259,14 @@ public static class StatusChain
             var waited = since is { } x ? s.Now - x : TimeSpan.Zero;
             if (s.Adapter is { MediaConnected: false })
                 return new(StepId.Traffic, title, StepState.Warning, "No link, so no DHCP requests can arrive.", "Connect the cable.");
+            if (waited >= NoTrafficWarning && s.FoundOnOtherSubnets.Count > 0)
+            {
+                var found = s.FoundOnOtherSubnets[0];
+                var more = s.FoundOnOtherSubnets.Count > 1 ? $" and {s.FoundOnOtherSubnets.Count - 1} more" : "";
+                return new(StepId.Traffic, title, StepState.Warning,
+                    $"No DHCP requests in {waited.TotalSeconds:0} s, but {found.Ip} ({found.Title}){more} is on the cable with a static IP.",
+                    "Press Reach it next to the device under Found on the network, then open its WebUI.", detail);
+            }
             if (waited >= NoTrafficWarning)
                 return new(StepId.Traffic, title, StepState.Warning,
                     $"Link is up but no DHCP requests in {waited.TotalSeconds:0} s. The device may have a static IP or DHCP turned off.",

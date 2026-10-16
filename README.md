@@ -6,7 +6,7 @@ Plug your laptop into a DSP, camera, switcher, display or control processor, pre
 
 ![ProDHCPServer main window in dark mode](docs/images/main-window-dark.png)
 
-> **Status:** Phase 1 (the core DHCP loop) is being built and tested on real hardware. Phases 2 and 3 follow once Phase 1 passes. See [Roadmap](#roadmap).
+> **Status:** Phases 1 and 2 are done and hardware-tested. Phase 3 (finding devices) is being built. See [Roadmap](#roadmap).
 
 ## Why
 
@@ -26,7 +26,7 @@ Most AV kit ships set to DHCP, and on a bench or a fresh site there's usually no
 - **Wi-Fi and VPN overlap warnings**, with a one-click option to turn Wi-Fi off until you press Stop.
 - **Dark and light themes**, with large status text you can read from arm's length.
 
-**Phase 2 (in progress)**
+**Phase 2**
 
 - **Live ping graph for every device.** Each device with a lease is pinged once a second. The device list shows a small latency graph with the latest reply time, and the selected device shows the last two minutes with average, min, max and loss. Missed replies show as red marks. When a device stops answering, or starts again, the session log records it.
 - **Session log you can filter and export.** Filter by level (everything, warnings and problems, problems only), by area (adapter, server, DHCP, device) or by text such as an IP or MAC address. **Export log…** saves what's shown as a text file for a job report, or as CSV for Excel.
@@ -39,6 +39,14 @@ Most AV kit ships set to DHCP, and on a bench or a fresh site there's usually no
   - Cisco IP phones (option 150), Poly phones (option 66), and a bench test with 2-minute leases.
 
   Each preset's pool leaves the documented factory addresses free. Presets can't be changed: duplicate one to make your own.
+
+**Phase 3 (in progress)**
+
+- **Static IP finder.** While the server runs, the **Found on the network** list shows every device heard on the cable that didn't take an address from the server, including ones with a static IP on another subnet. A device shows up as soon as it sends anything (a broadcast, an mDNS or UPnP announcement, a vendor beacon), and with Npcap installed, as soon as it powers up (its ARP check).
+- **Reach it.** One click adds a temporary address on the device's subnet to your adapter, so you can open its WebUI without stopping the DHCP server. The address is removed on Stop, on exit and after a crash, like every other change. If Wi-Fi is on that subnet, the app offers to turn it off until Stop.
+- **Scan for static IPs.** For quiet devices: ARPs every address on your subnet, the brand presets' factory subnets (192.168.254.x, 192.168.0.x, 192.168.1.x) and any subnet a device was seen on, using a temporary address on each that's removed straight after.
+- **Discovery protocols:** mDNS/DNS-SD (including Sennheiser SSC and Dante Domain Manager), SSDP/UPnP (with the device's own name and model), PJLink (projectors and displays), Art-Net (lighting nodes), AES67 stream announcements (SAP), AMX Device Discovery beacons, AMX NetLinx, Q-SYS and Shure discovery. Every query is read-only. Sources are in [docs/vendor-discovery.md](docs/vendor-discovery.md).
+- **Switch port.** With [Npcap](https://npcap.com) installed, shows which managed switch and port you're plugged into, and its VLAN, from LLDP or CDP. Everything else works without Npcap.
 
 **Default profile:** server IP `192.168.100.1/24`, addresses `192.168.100.100` to `192.168.100.199`, 60-minute leases. Make your own profile under **Profiles** (the gear button) to change any of these.
 
@@ -64,7 +72,8 @@ Most AV kit ships set to DHCP, and on a bench or a fresh site there's usually no
 |---|---|
 | Red banner: another DHCP server is on the link | You're plugged into a network that already hands out addresses (office, venue, home router). Unplug from it, or only use **Serve anyway** on a network you own. |
 | Step 2 red, "No link" | No cable, a dead port, or the device is off. Steps 2 to 4 recover by themselves when the link comes up. |
-| Step 5 amber, no DHCP requests after 30 seconds | The device probably has a static IP or DHCP turned off. |
+| Step 5 amber, no DHCP requests after 30 seconds | The device probably has a static IP or DHCP turned off. Look under **Found on the network**, or press **Scan for static IPs**, then **Reach it**. |
+| A device isn't found | Some devices stay silent until spoken to. Press **Scan for static IPs**. If it's on a subnet the scan doesn't cover, power-cycle it with Npcap installed: its ARP check at power-up shows its address. |
 | The device gets an offer but never accepts it | Some embedded network stacks ignore their own broadcast flag. Tick **Always broadcast replies** in your profile and try again. |
 | Step 1 amber, mentions Wi-Fi or VPN | Another adapter is on the same subnet. Use **Turn it off until Stop**, or use a profile with a different server IP. |
 | The app was killed mid-session | Open it again and click **Restore now** on the banner. The backup lives in `C:\ProgramData\ProDHCPServer\adapter-backup.json` until it's restored. |
@@ -76,8 +85,8 @@ If something goes wrong, [open an issue](https://github.com/cookingwithsimon/Pro
 Each phase ends with a hardware test pass on real AV equipment before the next one starts.
 
 - **Phase 1: core loop** (done, hardware-tested October 2026).
-- **Phase 2: visibility** (in progress). Continuous ping with a latency graph per device, a full session log you can filter and export (TXT/CSV), and saved profiles for subnet, pool, lease time and DHCP options (router, DNS, NTP, option 43/66/150 and custom options).
-- **Phase 3: discovery.** Find devices that already have a static IP, move your adapter onto their subnet in one click, and discover devices via mDNS (including Dante), SSDP/UPnP and LLDP/CDP.
+- **Phase 2: visibility** (done, hardware-tested October 2026). Continuous ping with a latency graph per device, a full session log you can filter and export (TXT/CSV), and saved profiles for subnet, pool, lease time and DHCP options (router, DNS, NTP, option 43/66/150 and custom options).
+- **Phase 3: discovery** (in progress). Find devices that already have a static IP, reach their subnet in one click, and discover devices via mDNS, SSDP/UPnP, vendor protocols and LLDP/CDP.
 
 ## Files it writes
 
@@ -109,7 +118,7 @@ dotnet publish src/ProDHCPServer.App -c Release -r win-x64 -o publish
 | `src/ProDHCPServer.Windows` | Windows specifics: adapter reading and changes, the UDP 67 socket, ARP entries, firewall rule, other-server probe, ping and port checks. |
 | `src/ProDHCPServer.App` | The WPF app: UI, elevation prompt, crash handling. |
 | `tests/` | Core unit tests (run anywhere) and Windows integration tests (run on the Windows CI runner and never change adapter settings). |
-| `docs/` | Hardware test checklists for each phase. |
+| `docs/` | Hardware test checklists for each phase, and the sources for the discovery protocols (`vendor-discovery.md`). |
 | `tools/` | CI smoke test (launches the app and takes screenshots) and the manufacturer list updater (`python3 tools/update-oui.py`). |
 
 **CI.** Every push and pull request runs the **Build and test** workflow on Windows: build, Core and Windows tests, publish the exe, and a smoke test that screenshots the app in light and dark mode. The exe and screenshots are uploaded as run artifacts.

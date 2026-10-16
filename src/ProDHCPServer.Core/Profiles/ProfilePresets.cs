@@ -9,6 +9,17 @@ public static class ProfilePresets
 {
     public const string DefaultName = "Default";
 
+    /// <summary>
+    /// The factory addresses the brand presets are built around, from the same sources. The static IP finder
+    /// never picks one of these for the laptop's temporary address.
+    /// </summary>
+    public static IReadOnlyList<System.Net.IPAddress> FactoryAddresses { get; } = new[]
+    {
+        "192.168.254.254", "192.168.254.250",                                                  // Extron
+        "192.168.0.100", "192.168.0.10", "192.168.0.160", "192.168.0.40", "192.168.0.80", "192.168.0.176", // Lightware, Christie, Sharp/NEC, Bose
+        "192.168.1.39", "192.168.1.150", "192.168.1.23", "192.168.1.3",                        // Kramer, Atlona, ClickShare, AMX
+    }.Select(Net.IPv4.Parse).ToList();
+
     public static Profile Default { get; } = new()
     {
         Name = DefaultName,
