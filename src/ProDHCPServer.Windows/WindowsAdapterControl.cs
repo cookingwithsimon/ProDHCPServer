@@ -209,6 +209,10 @@ public sealed class WindowsAdapterControl : IAdapterControl
                 CommandRunner.Netsh($"put back DNS server {s.StaticDnsServers[i]}", AlreadyDone,
                     "interface", "ipv4", "add", "dnsservers", $"name={idx}", $"address={s.StaticDnsServers[i]}", $"index={i + 1}", "validate=no");
         }
+
+        // Clear the adapter's ARP cache, which drops any permanent entries the server added for
+        // clients and left behind after a crash. Windows rebuilds the cache on demand; failure is harmless.
+        CommandRunner.Run("netsh.exe", ["interface", "ipv4", "delete", "neighbors", $"interface={idx}"]);
     }
 
     public void SetAdapterEnabled(string adapterId, bool enabled)
