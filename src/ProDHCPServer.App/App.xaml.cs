@@ -65,6 +65,8 @@ public partial class App : Application
 
         var vm = new MainViewModel(adapters, sessions, _controller, _log, settingsStore, Dispatcher);
         _controller.DhcpEvent += vm.OnDhcpEvent;
+        // Used by tools/smoke-test.ps1 to screenshot the settings slide-over.
+        if (e.Args.Contains("--open-settings")) vm.SettingsOpen = true;
         var window = new MainWindow { DataContext = vm };
         window.Closed += (_, _) => Shutdown();
         MainWindow = window;

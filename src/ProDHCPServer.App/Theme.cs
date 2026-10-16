@@ -12,12 +12,19 @@ public static class Theme
 {
     private static readonly Dictionary<string, (string Dark, string Light)> Tokens = new()
     {
+        // Surfaces: L0 canvas, L1 panels and lists, L3 the settings slide-over. Borders before shadows.
         ["WindowBg"] = ("#15171A", "#F3F4F6"),
         ["PanelBg"] = ("#1E2125", "#FFFFFF"),
-        ["PanelBorder"] = ("#30353B", "#D8DCE1"),
+        ["PanelBorder"] = ("#2E3238", "#E1E4E8"),
+        ["Hairline"] = ("#2A2E33", "#ECEEF1"),
+        ["RowHover"] = ("#262A2F", "#F3F4F6"),
+        ["OverlayBg"] = ("#23272C", "#FFFFFF"),
+        ["OverlayBorder"] = ("#3A3F46", "#D8DCE1"),
+        ["Scrim"] = ("#99000000", "#59000000"),
         ["TextPrimary"] = ("#F0F2F5", "#16191D"),
         ["TextSecondary"] = ("#B4BAC2", "#4A525C"),
-        ["TextMuted"] = ("#808893", "#6E7681"),
+        ["TextMuted"] = ("#8B939E", "#646C77"),
+        // Status colours, tuned for readability at arm's length.
         ["GoodBrush"] = ("#3FB950", "#1A7F37"),
         ["WarnBrush"] = ("#E3A21A", "#B7790B"),
         ["BadBrush"] = ("#F2564B", "#CF222E"),
@@ -25,8 +32,10 @@ public static class Theme
         ["GoodSoft"] = ("#163B22", "#DDF4E3"),
         ["WarnSoft"] = ("#3D2F0E", "#FDF0D5"),
         ["BadSoft"] = ("#4A1B1C", "#FBE1E3"),
-        ["IdleSoft"] = ("#25292E", "#EEF0F3"),
+        ["IdleSoft"] = ("#25292E", "#EAECEF"),
+        // The one interactive accent: primary buttons, the selected device, focus.
         ["AccentBrush"] = ("#2F81F7", "#0969DA"),
+        ["AccentSoft"] = ("#1A2D47", "#E6F0FC"),
         ["AccentText"] = ("#FFFFFF", "#FFFFFF"),
         ["MonoBg"] = ("#111316", "#F6F8FA"),
     };

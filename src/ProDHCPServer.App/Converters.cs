@@ -6,11 +6,20 @@ using ProDHCPServer.Core.Status;
 
 namespace ProDHCPServer.App;
 
-/// <summary>StepState (or LogSeverity) → one of the theme brushes. ConverterParameter "Soft" picks the tinted background.</summary>
+/// <summary>
+/// StepState (or LogSeverity) → one of the theme brushes. ConverterParameter "Soft" picks the tinted background;
+/// "Issue" picks the tinted background only for warnings and problems (transparent otherwise) so those rows stand out.
+/// </summary>
 public sealed class StateBrushConverter : IValueConverter
 {
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
+        if (parameter as string == "Issue")
+        {
+            return value is StepState.Warning or StepState.Bad
+                ? Convert(value, targetType, "Soft", culture)
+                : System.Windows.Media.Brushes.Transparent;
+        }
         var soft = parameter as string == "Soft";
         var key = value switch
         {
@@ -33,22 +42,27 @@ public sealed class StateWordConverter : IValueConverter
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture) => value switch
     {
         StepState.Good => "OK",
-        StepState.Warning => "CHECK",
-        StepState.Bad => "PROBLEM",
-        _ => "—",
+        StepState.Warning => "Check",
+        StepState.Bad => "Problem",
+        _ => "Not started",
     };
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotSupportedException();
 }
 
+/// <summary>
+/// StepState → a Segoe Fluent Icons glyph (falls back to Segoe MDL2 Assets on Windows 10). The shape differs per state
+/// so the status never relies on colour alone. Idle has no glyph (the step shows its number) unless the parameter is
+/// "Hero", which shows a power symbol.
+/// </summary>
 public sealed class StateGlyphConverter : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture) => value switch
     {
-        StepState.Good => "✓",
-        StepState.Warning => "!",
-        StepState.Bad => "✕",
-        _ => "",
+        StepState.Good => "\uE73E",
+        StepState.Warning => "\uE171",
+        StepState.Bad => "\uE711",
+        _ => parameter as string == "Hero" ? "\uE7E8" : "",
     };
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotSupportedException();

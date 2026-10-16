@@ -17,29 +17,29 @@ public sealed class ElevationWindow : Window
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
         SetResourceReference(BackgroundProperty, "WindowBg");
 
-        var heading = new TextBlock { Text = "Administrator rights needed", FontSize = 22, FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 0, 0, 12) };
+        var heading = new TextBlock { Text = "Administrator rights needed", FontSize = 24, FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 0, 0, 16) };
         heading.SetResourceReference(TextBlock.ForegroundProperty, "TextPrimary");
         var body = new TextBlock
         {
             TextWrapping = TextWrapping.Wrap,
-            FontSize = 14,
+            FontSize = 16,
             Text = "To act as a DHCP server, ProDHCPServer has to:\n\n" +
                    "  •  listen on UDP port 67\n" +
                    "  •  set a static IP on the adapter you pick (and put it back afterwards)\n" +
                    "  •  add a Windows Firewall rule for DHCP\n\n" +
-                   "Windows only allows that for administrators. Click Continue and choose Yes on the Windows prompt.",
+                   "Windows only allows that for administrators. Click Restart as administrator and choose Yes on the Windows prompt.",
         };
         body.SetResourceReference(TextBlock.ForegroundProperty, "TextSecondary");
 
-        var cont = new Button { Content = "Continue", MinWidth = 120, Padding = new Thickness(16, 8, 16, 8), IsDefault = true, Margin = new Thickness(0, 0, 8, 0) };
+        var cont = new Button { Content = "Restart as administrator", MinWidth = 120, Padding = new Thickness(16, 8, 16, 8), IsDefault = true, Margin = new Thickness(0, 0, 8, 0) };
         cont.SetResourceReference(StyleProperty, "AccentButton");
         cont.Click += (_, _) => { Relaunch = true; Close(); };
-        var quit = new Button { Content = "Quit", MinWidth = 100, Padding = new Thickness(16, 8, 16, 8), IsCancel = true };
+        var quit = new Button { Content = "Quit ProDHCPServer", MinWidth = 100, Padding = new Thickness(16, 8, 16, 8), IsCancel = true };
         quit.Click += (_, _) => Close();
 
         Content = new StackPanel
         {
-            Margin = new Thickness(28),
+            Margin = new Thickness(24),
             Children =
             {
                 heading,

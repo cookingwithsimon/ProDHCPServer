@@ -15,394 +15,509 @@
         SourceInitialized="OnSourceInitialized">
     <Window.InputBindings>
         <KeyBinding Key="F5" Command="{Binding RefreshAdaptersCommand}" />
+        <KeyBinding Key="OemComma" Modifiers="Control" Command="{Binding ToggleSettingsCommand}" />
+        <KeyBinding Key="Escape" Command="{Binding CloseSettingsCommand}" />
     </Window.InputBindings>
 
-    <Grid Margin="16">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
+    <!--
+        Page pattern: Dashboard / Overview for one live session. One job: see at a glance whether the device on the
+        cable has an address and can be reached. Settings open as a slide-over so the status stays in view behind it.
+    -->
+    <Grid>
+        <Grid x:Name="MainContent" Margin="16">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
 
-        <!-- ===== Top bar: adapter picker + Start/Stop ===== -->
-        <Grid Grid.Row="0" Margin="0,0,0,12">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
+            <!-- ===== Top bar: adapter picker, refresh, settings, Start/Stop ===== -->
+            <Grid Grid.Row="0" Margin="0,0,0,16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
 
-            <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,20,0">
-                <TextBlock Text="ProDHCPServer" FontSize="20" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}" />
-                <TextBlock Text="DHCP for the device on the end of your cable" FontSize="12" Foreground="{DynamicResource TextMuted}" />
-            </StackPanel>
+                <Label Grid.Column="0" Content="_Adapter" Target="{Binding ElementName=AdapterPicker}" VerticalAlignment="Center" Padding="0" Margin="0,0,12,0"
+                       FontSize="{StaticResource TextSmall}" FontWeight="Medium" Foreground="{DynamicResource TextSecondary}" />
 
-            <ComboBox Grid.Column="1" ItemsSource="{Binding Adapters}" SelectedItem="{Binding SelectedAdapter}"
-                      IsEnabled="{Binding SettingsEditable}" MinHeight="56" MaxWidth="620" HorizontalAlignment="Stretch"
-                      AutomationProperties.Name="Network adapter" ToolTip="The adapter your cable is plugged into">
-                <ComboBox.ItemTemplate>
-                    <DataTemplate DataType="{x:Type vm:AdapterItemViewModel}">
-                        <Grid Margin="2">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <Ellipse Width="12" Height="12" Margin="0,0,10,0" VerticalAlignment="Center"
-                                     Fill="{Binding LinkState, Converter={StaticResource StateBrush}}" />
-                            <StackPanel Grid.Column="1">
-                                <TextBlock FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}">
-                                    <Run Text="{Binding Name, Mode=OneWay}" />
-                                    <Run Text="  " /><Run Text="{Binding KindText, Mode=OneWay}" Foreground="{DynamicResource TextMuted}" FontWeight="Normal" FontSize="13" />
-                                </TextBlock>
-                                <TextBlock FontSize="12" Foreground="{DynamicResource TextSecondary}" TextTrimming="CharacterEllipsis">
-                                    <Run Text="{Binding LinkText, Mode=OneWay}" /><Run Text="  ·  " /><Run Text="{Binding Info.Description, Mode=OneWay}" />
-                                </TextBlock>
-                            </StackPanel>
-                        </Grid>
-                    </DataTemplate>
-                </ComboBox.ItemTemplate>
-            </ComboBox>
+                <ComboBox x:Name="AdapterPicker" Grid.Column="1" ItemsSource="{Binding Adapters}" SelectedItem="{Binding SelectedAdapter}"
+                          IsEnabled="{Binding SettingsEditable}" MinHeight="56" HorizontalAlignment="Stretch"
+                          ToolTip="The adapter your cable is plugged into">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate DataType="{x:Type vm:AdapterItemViewModel}">
+                            <Grid Margin="0,4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Ellipse Width="12" Height="12" Margin="0,0,12,0" VerticalAlignment="Center"
+                                         Fill="{Binding LinkState, Converter={StaticResource StateBrush}}" />
+                                <StackPanel Grid.Column="1">
+                                    <TextBlock FontSize="{StaticResource TextBody}" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}" TextTrimming="CharacterEllipsis">
+                                        <Run Text="{Binding Name, Mode=OneWay}" />
+                                        <Run Text="  " /><Run Text="{Binding KindText, Mode=OneWay}" Foreground="{DynamicResource TextMuted}" FontWeight="Normal" FontSize="{StaticResource TextSmall}" />
+                                    </TextBlock>
+                                    <TextBlock FontSize="{StaticResource TextMeta}" Foreground="{DynamicResource TextSecondary}" TextTrimming="CharacterEllipsis">
+                                        <Run Text="{Binding LinkText, Mode=OneWay}" /><Run Text="  ·  " /><Run Text="{Binding Info.Description, Mode=OneWay}" />
+                                    </TextBlock>
+                                </StackPanel>
+                            </Grid>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
 
-            <Button Grid.Column="2" Content="↻" FontSize="20" Width="48" MinHeight="56" Margin="8,0,0,0"
-                    Command="{Binding RefreshAdaptersCommand}" ToolTip="Refresh adapters (F5)" AutomationProperties.Name="Refresh adapters" />
-            <Button Grid.Column="3" Content="⚙  Settings" FontSize="15" MinHeight="56" Padding="16,0" Margin="8,0,0,0"
-                    Command="{Binding ToggleSettingsCommand}" ToolTip="Server IP, pool, lease time and options" />
-            <Button Grid.Column="4" MinWidth="170" MinHeight="56" Margin="16,0,0,0" FontSize="22" FontWeight="SemiBold"
-                    Command="{Binding StartStopCommand}" Content="{Binding StartStopText}" Foreground="White">
-                <Button.Style>
-                    <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-                        <Setter Property="Background" Value="{DynamicResource GoodBrush}" />
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding IsRunning}" Value="True">
-                                <Setter Property="Background" Value="{DynamicResource BadBrush}" />
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </Button.Style>
-            </Button>
-        </Grid>
+                <Button Grid.Column="2" Style="{StaticResource IconButton}" Content="&#xE72C;" Width="56" Height="56" Margin="8,0,0,0"
+                        Command="{Binding RefreshAdaptersCommand}" ToolTip="Refresh adapters (F5)" AutomationProperties.Name="Refresh adapters" />
+                <Button x:Name="SettingsButton" Grid.Column="3" Style="{StaticResource IconButton}" Content="&#xE713;" Width="56" Height="56" Margin="8,0,0,0"
+                        Command="{Binding ToggleSettingsCommand}" ToolTip="Open server settings (Ctrl+,)" AutomationProperties.Name="Open server settings" />
 
-        <!-- ===== Headline: the one line that matters ===== -->
-        <Border Grid.Row="1" CornerRadius="10" Padding="20,14" Margin="0,0,0,12" BorderThickness="6,0,0,0"
-                Background="{Binding HeadlineState, Converter={StaticResource StateBrush}, ConverterParameter=Soft}"
-                BorderBrush="{Binding HeadlineState, Converter={StaticResource StateBrush}}">
-            <StackPanel>
-                <TextBlock Text="{Binding HeadlineText}" FontSize="26" FontWeight="SemiBold" Style="{StaticResource Primary}"
-                           AutomationProperties.LiveSetting="Assertive" />
-                <TextBlock Text="{Binding HeadlineAction}" FontSize="16" Margin="0,4,0,0" Style="{StaticResource Secondary}"
-                           Visibility="{Binding HeadlineAction, Converter={StaticResource VisibleWhen}}" />
-            </StackPanel>
-        </Border>
+                <Button Grid.Column="4" MinWidth="184" Height="56" Margin="16,0,0,0" Padding="24,0"
+                        Command="{Binding StartStopCommand}" AutomationProperties.Name="{Binding StartStopText}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock FontFamily="{StaticResource IconFont}" FontSize="{StaticResource TextBody}" VerticalAlignment="Center" Margin="0,0,12,0">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Text" Value="&#xE768;" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsRunning}" Value="True">
+                                            <Setter Property="Text" Value="&#xE71A;" />
+                                            <Setter Property="Foreground" Value="{DynamicResource BadBrush}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <TextBlock Text="{Binding StartStopText}" FontSize="{StaticResource TextH3}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                    </StackPanel>
+                    <Button.Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                            <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+                            <Setter Property="Foreground" Value="{DynamicResource AccentText}" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsRunning}" Value="True">
+                                    <!-- While running, Stop is a quiet neutral button: the status block above says the server is live. -->
+                                    <Setter Property="Background" Value="{DynamicResource PanelBg}" />
+                                    <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+            </Grid>
 
-        <!-- ===== Banners ===== -->
-        <StackPanel Grid.Row="2">
-            <!-- Crash recovery -->
-            <Border CornerRadius="10" Padding="16,12" Margin="0,0,0,12" Background="{DynamicResource WarnSoft}" BorderBrush="{DynamicResource WarnBrush}" BorderThickness="1"
-                    Visibility="{Binding PendingRecovery, Converter={StaticResource VisibleWhen}}">
+            <!-- ===== Status: the one line that matters, readable from across the rack ===== -->
+            <Border Grid.Row="1" CornerRadius="8" Padding="24,16" Margin="0,0,0,16" BorderThickness="1"
+                    Background="{Binding HeadlineState, Converter={StaticResource StateBrush}, ConverterParameter=Soft}"
+                    BorderBrush="{Binding HeadlineState, Converter={StaticResource StateBrush}}">
                 <Grid>
-                    <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                    <TextBlock Text="{Binding RecoveryText}" FontSize="15" Style="{StaticResource Primary}" VerticalAlignment="Center" />
-                    <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="16,0,0,0">
-                        <Button Content="Restore now" Style="{StaticResource AccentButton}" Padding="16,8" Command="{Binding RestorePendingCommand}" />
-                        <Button Content="Keep current settings" Padding="16,8" Margin="8,0,0,0" Command="{Binding DiscardPendingCommand}" />
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid Width="56" Height="56" Margin="0,0,24,0" VerticalAlignment="Center"
+                          AutomationProperties.Name="{Binding HeadlineState, Converter={StaticResource StateWord}}">
+                        <Ellipse Fill="{Binding HeadlineState, Converter={StaticResource StateBrush}}" />
+                        <TextBlock Text="{Binding HeadlineState, Converter={StaticResource StateGlyph}, ConverterParameter=Hero}"
+                                   FontFamily="{StaticResource IconFont}" FontSize="{StaticResource TextH2}" Foreground="White"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Grid>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding HeadlineText}" FontSize="{StaticResource TextH1}" FontWeight="SemiBold" LineHeight="34" Style="{StaticResource Primary}"
+                                   AutomationProperties.LiveSetting="Assertive" />
+                        <TextBlock Text="{Binding HeadlineAction}" FontSize="{StaticResource TextBody}" Margin="0,4,0,0" Style="{StaticResource Secondary}"
+                                   Visibility="{Binding HeadlineAction, Converter={StaticResource VisibleWhen}}" />
                     </StackPanel>
                 </Grid>
             </Border>
 
-            <!-- Another DHCP server -->
-            <Border CornerRadius="10" Padding="16,12" Margin="0,0,0,12" Background="{DynamicResource BadSoft}" BorderBrush="{DynamicResource BadBrush}" BorderThickness="2"
-                    Visibility="{Binding OtherServerText, Converter={StaticResource VisibleWhen}}">
-                <StackPanel>
+            <!-- ===== Banners ===== -->
+            <StackPanel Grid.Row="2">
+                <!-- Crash recovery -->
+                <Border Style="{StaticResource Banner}" Background="{DynamicResource WarnSoft}" BorderBrush="{DynamicResource WarnBrush}"
+                        Visibility="{Binding PendingRecovery, Converter={StaticResource VisibleWhen}}">
                     <Grid>
                         <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                        <TextBlock FontSize="17" FontWeight="SemiBold" Style="{StaticResource Primary}" VerticalAlignment="Center">
-                            <Run Text="⚠ " Foreground="{DynamicResource BadBrush}" /><Run Text="{Binding OtherServerText, Mode=OneWay}" />
-                        </TextBlock>
-                        <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="16,0,0,0">
-                            <Button Content="Stop" Padding="16,8" Command="{Binding StartStopCommand}" />
-                            <Button Content="Serve anyway…" Padding="16,8" Margin="8,0,0,0" Command="{Binding ServeAnywayCommand}" />
+                        <TextBlock Text="{Binding RecoveryText}" FontSize="{StaticResource TextBody}" Style="{StaticResource Primary}" VerticalAlignment="Center" />
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="16,0,0,0" VerticalAlignment="Center">
+                            <Button Content="Restore adapter" Style="{StaticResource AccentButton}" Command="{Binding RestorePendingCommand}" />
+                            <Button Content="Keep current settings" Style="{StaticResource SecondaryButton}" Margin="8,0,0,0" Command="{Binding DiscardPendingCommand}" />
                         </StackPanel>
                     </Grid>
-                    <Expander Header="Technical detail" Margin="0,8,0,0" Foreground="{DynamicResource TextSecondary}"
-                              Visibility="{Binding OtherServerDetail, Converter={StaticResource VisibleWhen}}">
-                        <TextBox Text="{Binding OtherServerDetail, Mode=OneWay}" Style="{StaticResource MonoBox}" />
-                    </Expander>
-                </StackPanel>
-            </Border>
+                </Border>
 
-            <!-- Errors -->
-            <Border CornerRadius="10" Padding="16,12" Margin="0,0,0,12" Background="{DynamicResource BadSoft}" BorderBrush="{DynamicResource BadBrush}" BorderThickness="1"
-                    Visibility="{Binding ErrorMessage, Converter={StaticResource VisibleWhen}}">
-                <StackPanel>
-                    <Grid>
-                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                        <TextBlock Text="{Binding ErrorMessage}" FontSize="15" FontWeight="SemiBold" Style="{StaticResource Primary}" VerticalAlignment="Center" />
-                        <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="16,0,0,0">
-                            <Button Content="Retry restore" Padding="14,6" Margin="0,0,8,0" Command="{Binding RetryRestoreCommand}"
-                                    Visibility="{Binding CanRetryRestore, Converter={StaticResource VisibleWhen}}" />
-                            <Button Content="Copy" Padding="14,6" Margin="0,0,8,0" Command="{Binding CopyTextCommand}" CommandParameter="{Binding ErrorDetail}"
-                                    Visibility="{Binding ErrorDetail, Converter={StaticResource VisibleWhen}}" />
-                            <Button Content="Dismiss" Padding="14,6" Command="{Binding DismissErrorCommand}" />
-                        </StackPanel>
-                    </Grid>
-                    <Expander Header="Technical detail" Margin="0,8,0,0" Foreground="{DynamicResource TextSecondary}"
-                              Visibility="{Binding ErrorDetail, Converter={StaticResource VisibleWhen}}">
-                        <TextBox Text="{Binding ErrorDetail, Mode=OneWay}" Style="{StaticResource MonoBox}" />
-                    </Expander>
-                </StackPanel>
-            </Border>
-
-            <!-- Overlapping Wi-Fi/other adapter -->
-            <Border CornerRadius="10" Padding="16,10" Margin="0,0,0,12" Background="{DynamicResource WarnSoft}" BorderBrush="{DynamicResource WarnBrush}" BorderThickness="1"
-                    Visibility="{Binding ConflictText, Converter={StaticResource VisibleWhen}}">
-                <Grid>
-                    <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                    <TextBlock Text="{Binding ConflictText}" FontSize="15" Style="{StaticResource Primary}" VerticalAlignment="Center" />
-                    <Button Grid.Column="1" Content="Turn it off until Stop" Padding="16,8" Margin="16,0,0,0" Command="{Binding TurnOffConflictingCommand}" />
-                </Grid>
-            </Border>
-        </StackPanel>
-
-        <!-- ===== Main: status chain | device ===== -->
-        <Grid Grid.Row="3">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="1.15*" MinWidth="480" />
-                <ColumnDefinition Width="16" />
-                <ColumnDefinition Width="*" MinWidth="400" />
-            </Grid.ColumnDefinitions>
-
-            <!-- Status chain -->
-            <Border Style="{StaticResource Panel}" Padding="8">
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <ItemsControl ItemsSource="{Binding Steps}" AutomationProperties.Name="Status checks">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate DataType="{x:Type vm:StepViewModel}">
-                                <Border Padding="8,6" Margin="0,0,0,2" CornerRadius="8">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto" />
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
-                                        <Grid Width="32" Height="32" VerticalAlignment="Top" Margin="0,2,12,0">
-                                            <Ellipse Fill="{Binding State, Converter={StaticResource StateBrush}}" />
-                                            <TextBlock Text="{Binding State, Converter={StaticResource StateGlyph}}" Foreground="White" FontSize="18" FontWeight="Bold"
-                                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                            <TextBlock Text="{Binding Number}" Foreground="White" FontSize="15" FontWeight="SemiBold"
-                                                       HorizontalAlignment="Center" VerticalAlignment="Center">
-                                                <TextBlock.Style>
-                                                    <Style TargetType="TextBlock">
-                                                        <Setter Property="Visibility" Value="Collapsed" />
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding State}" Value="{x:Static status:StepState.Idle}">
-                                                                <Setter Property="Visibility" Value="Visible" />
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </TextBlock.Style>
-                                            </TextBlock>
-                                        </Grid>
-                                        <StackPanel Grid.Column="1">
-                                            <TextBlock Text="{Binding Title}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextMuted}" />
-                                            <TextBlock Text="{Binding Reason}" FontSize="16" Style="{StaticResource Primary}" Margin="0,1,0,0" />
-                                            <TextBlock Text="{Binding Action}" FontSize="13" Margin="0,2,0,0" FontStyle="Italic"
-                                                       Foreground="{Binding State, Converter={StaticResource StateBrush}}" TextWrapping="Wrap"
-                                                       Visibility="{Binding Action, Converter={StaticResource VisibleWhen}}" />
-                                            <Expander Header="Details" Margin="0,4,0,0" FontSize="12" Foreground="{DynamicResource TextMuted}"
-                                                      Visibility="{Binding Detail, Converter={StaticResource VisibleWhen}}">
-                                                <TextBox Text="{Binding Detail, Mode=OneWay}" Style="{StaticResource MonoBox}" Margin="0,4,0,0" />
-                                            </Expander>
-                                        </StackPanel>
-                                        <TextBlock Grid.Column="2" Text="{Binding State, Converter={StaticResource StateWord}}" FontSize="12" FontWeight="Bold"
-                                                   Foreground="{Binding State, Converter={StaticResource StateBrush}}" Margin="12,4,0,0" VerticalAlignment="Top" />
-                                    </Grid>
-                                </Border>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </ScrollViewer>
-            </Border>
-
-            <!-- Device panel -->
-            <Border Grid.Column="2" Style="{StaticResource Panel}" Padding="20"
-                    Visibility="{Binding SettingsOpen, Converter={StaticResource VisibleWhen}, ConverterParameter=Invert}">
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <!-- Another DHCP server -->
+                <Border Style="{StaticResource Banner}" Background="{DynamicResource BadSoft}" BorderBrush="{DynamicResource BadBrush}" BorderThickness="2"
+                        Visibility="{Binding OtherServerText, Converter={StaticResource VisibleWhen}}">
                     <StackPanel>
                         <Grid>
-                            <TextBlock Text="DEVICE" Style="{StaticResource SectionTitle}" />
-                            <TextBlock Text="{Binding DeviceCountText}" HorizontalAlignment="Right" FontSize="13" Foreground="{DynamicResource TextMuted}" />
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <TextBlock Text="&#xE7BA;" FontFamily="{StaticResource IconFont}" FontSize="{StaticResource TextH3}" Foreground="{DynamicResource BadBrush}"
+                                       VerticalAlignment="Center" Margin="0,0,12,0" />
+                            <TextBlock Grid.Column="1" Text="{Binding OtherServerText}" FontSize="{StaticResource TextBody}" FontWeight="SemiBold" Style="{StaticResource Primary}" VerticalAlignment="Center" />
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="16,0,0,0" VerticalAlignment="Center">
+                                <Button Content="Stop server" Style="{StaticResource SecondaryButton}" Command="{Binding StartStopCommand}" />
+                                <Button Content="Serve anyway…" Style="{StaticResource SecondaryButton}" Margin="8,0,0,0" Command="{Binding ServeAnywayCommand}" />
+                            </StackPanel>
                         </Grid>
+                        <Expander Header="Technical detail" Margin="0,8,0,0" Foreground="{DynamicResource TextSecondary}"
+                                  Visibility="{Binding OtherServerDetail, Converter={StaticResource VisibleWhen}}">
+                            <TextBox Text="{Binding OtherServerDetail, Mode=OneWay}" Style="{StaticResource MonoBox}" />
+                        </Expander>
+                    </StackPanel>
+                </Border>
 
-                        <!-- No device yet -->
-                        <StackPanel Visibility="{Binding FocusedDevice, Converter={StaticResource VisibleWhen}, ConverterParameter=Invert}" Margin="0,24,0,0">
-                            <TextBlock Text="No device has an address yet" FontSize="22" FontWeight="SemiBold" Style="{StaticResource Primary}" />
-                            <TextBlock Margin="0,8,0,0" FontSize="15" Style="{StaticResource Secondary}"
-                                       Text="Press Start, then plug in or power-cycle the device. Its IP, name and manufacturer appear here as soon as it takes a lease." />
-                        </StackPanel>
+                <!-- Errors -->
+                <Border Style="{StaticResource Banner}" Background="{DynamicResource BadSoft}" BorderBrush="{DynamicResource BadBrush}"
+                        Visibility="{Binding ErrorMessage, Converter={StaticResource VisibleWhen}}">
+                    <StackPanel>
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <TextBlock Text="&#xEA39;" FontFamily="{StaticResource IconFont}" FontSize="{StaticResource TextH3}" Foreground="{DynamicResource BadBrush}"
+                                       VerticalAlignment="Center" Margin="0,0,12,0" />
+                            <TextBlock Grid.Column="1" Text="{Binding ErrorMessage}" FontSize="{StaticResource TextBody}" FontWeight="SemiBold" Style="{StaticResource Primary}" VerticalAlignment="Center" />
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="16,0,0,0" VerticalAlignment="Center">
+                                <Button Content="Retry restore" Style="{StaticResource AccentButton}" Margin="0,0,8,0" Command="{Binding RetryRestoreCommand}"
+                                        Visibility="{Binding CanRetryRestore, Converter={StaticResource VisibleWhen}}" />
+                                <Button Content="Copy error details" Style="{StaticResource SecondaryButton}" Margin="0,0,8,0" Command="{Binding CopyTextCommand}" CommandParameter="{Binding ErrorDetail}"
+                                        Visibility="{Binding ErrorDetail, Converter={StaticResource VisibleWhen}}" />
+                                <Button Content="Dismiss" Style="{StaticResource SecondaryButton}" Command="{Binding DismissErrorCommand}" />
+                            </StackPanel>
+                        </Grid>
+                        <Expander Header="Technical detail" Margin="0,8,0,0" Foreground="{DynamicResource TextSecondary}"
+                                  Visibility="{Binding ErrorDetail, Converter={StaticResource VisibleWhen}}">
+                            <TextBox Text="{Binding ErrorDetail, Mode=OneWay}" Style="{StaticResource MonoBox}" />
+                        </Expander>
+                    </StackPanel>
+                </Border>
 
-                        <!-- Focused device -->
-                        <StackPanel DataContext="{Binding FocusedDevice}" Visibility="{Binding Converter={StaticResource VisibleWhen}}">
-                            <TextBlock Text="{Binding Title}" FontSize="24" FontWeight="SemiBold" Style="{StaticResource Primary}" />
-                            <TextBlock Text="{Binding Vendor}" FontSize="15" Style="{StaticResource Secondary}" />
-                            <Grid Margin="0,12,0,0">
-                                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                                <TextBlock Text="{Binding Ip}" FontSize="46" FontWeight="SemiBold" FontFamily="{StaticResource MonoFont}" Style="{StaticResource Primary}"
-                                           AutomationProperties.Name="Device IP address" />
-                                <Button Grid.Column="1" Content="Copy" Margin="14,0,0,0" Padding="14,6" VerticalAlignment="Center"
-                                        Command="{Binding DataContext.CopyIpCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" />
-                            </Grid>
-                            <Grid Margin="0,12,0,0">
-                                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                                <Grid.RowDefinitions><RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition /></Grid.RowDefinitions>
-                                <TextBlock Grid.Row="0" Text="MAC" Style="{StaticResource Secondary}" Margin="0,2,16,2" />
-                                <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding MacText}" FontFamily="{StaticResource MonoFont}" FontSize="15" Style="{StaticResource Primary}" />
-                                <TextBlock Grid.Row="1" Text="Lease" Style="{StaticResource Secondary}" Margin="0,2,16,2" />
-                                <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding LeaseText}" FontSize="15" Style="{StaticResource Primary}" />
-                                <TextBlock Grid.Row="2" Text="Seen" Style="{StaticResource Secondary}" Margin="0,2,16,2" />
-                                <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding FirstSeenText}" FontSize="15" Style="{StaticResource Primary}" />
-                                <TextBlock Grid.Row="3" Text="Vendor ID" Style="{StaticResource Secondary}" Margin="0,2,16,2"
-                                           Visibility="{Binding VendorClass, Converter={StaticResource VisibleWhen}}" />
-                                <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding VendorClass}" FontSize="15" Style="{StaticResource Primary}"
-                                           Visibility="{Binding VendorClass, Converter={StaticResource VisibleWhen}}" />
-                            </Grid>
-                        </StackPanel>
+                <!-- Overlapping Wi-Fi/other adapter -->
+                <Border Style="{StaticResource Banner}" Background="{DynamicResource WarnSoft}" BorderBrush="{DynamicResource WarnBrush}"
+                        Visibility="{Binding ConflictText, Converter={StaticResource VisibleWhen}}">
+                    <Grid>
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                        <TextBlock Text="{Binding ConflictText}" FontSize="{StaticResource TextBody}" Style="{StaticResource Primary}" VerticalAlignment="Center" />
+                        <Button Grid.Column="1" Content="Turn it off until Stop" Style="{StaticResource SecondaryButton}" Margin="16,0,0,0" VerticalAlignment="Center"
+                                Command="{Binding TurnOffConflictingCommand}" />
+                    </Grid>
+                </Border>
+            </StackPanel>
 
-                        <StackPanel Visibility="{Binding FocusedDevice, Converter={StaticResource VisibleWhen}}" Margin="0,18,0,0">
-                            <Button Content="Open WebUI" Style="{StaticResource AccentButton}" FontSize="22" MinHeight="64" HorizontalAlignment="Stretch"
-                                    Command="{Binding OpenWebUiCommand}" ToolTip="Opens the device in your browser (http or https, whichever port is open)" />
-                            <TextBlock Text="{Binding WebUiHint}" FontSize="13" Margin="0,6,0,0" HorizontalAlignment="Center" Foreground="{DynamicResource TextMuted}" />
-                            <WrapPanel Margin="0,12,0,0" HorizontalAlignment="Center">
-                                <Button Content="http :80" Padding="12,6" Margin="0,0,6,6" Command="{Binding OpenPortCommand}" CommandParameter="http:80" />
-                                <Button Content="https :443" Padding="12,6" Margin="0,0,6,6" Command="{Binding OpenPortCommand}" CommandParameter="https:443" />
-                                <Button Content="http :8080" Padding="12,6" Margin="0,0,6,6" Command="{Binding OpenPortCommand}" CommandParameter="http:8080" />
-                                <Button Content="https :8443" Padding="12,6" Margin="0,0,6,6" Command="{Binding OpenPortCommand}" CommandParameter="https:8443" />
-                            </WrapPanel>
-                        </StackPanel>
+            <!-- ===== Main: status checks | device ===== -->
+            <Grid Grid.Row="3">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1.15*" MinWidth="440" />
+                    <ColumnDefinition Width="16" />
+                    <ColumnDefinition Width="*" MinWidth="384" />
+                </Grid.ColumnDefinitions>
 
-                        <!-- All devices (switch case) -->
-                        <TextBlock Text="ALL DEVICES" Style="{StaticResource SectionTitle}" Margin="0,22,0,8"
-                                   Visibility="{Binding Devices.Count, Converter={StaticResource VisibleWhen}}" />
-                        <ItemsControl ItemsSource="{Binding Devices}">
+                <!-- Status checks: the chain from adapter to device, numbered in the order a tech would check them -->
+                <Border Style="{StaticResource Panel}" Padding="0">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="8">
+                        <ItemsControl ItemsSource="{Binding Steps}" AutomationProperties.Name="Status checks">
                             <ItemsControl.ItemTemplate>
-                                <DataTemplate DataType="{x:Type vm:DeviceViewModel}">
-                                    <Button Margin="0,0,0,6" Padding="12,8" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
-                                            Command="{Binding DataContext.FocusDeviceCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}"
-                                            ToolTip="Show this device above">
+                                <DataTemplate DataType="{x:Type vm:StepViewModel}">
+                                    <Border Padding="8" CornerRadius="4"
+                                            Background="{Binding State, Converter={StaticResource StateBrush}, ConverterParameter=Issue}">
                                         <Grid>
                                             <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
                                             </Grid.ColumnDefinitions>
-                                            <Ellipse Width="10" Height="10" Margin="0,0,10,0" Fill="{Binding StateColour, Converter={StaticResource StateBrush}}" />
+                                            <Grid Width="32" Height="32" VerticalAlignment="Top" Margin="0,0,16,0"
+                                                  AutomationProperties.Name="{Binding State, Converter={StaticResource StateWord}}">
+                                                <Ellipse Fill="{Binding State, Converter={StaticResource StateBrush}}" />
+                                                <TextBlock Text="{Binding State, Converter={StaticResource StateGlyph}}" FontFamily="{StaticResource IconFont}"
+                                                           Foreground="White" FontSize="{StaticResource TextBody}"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                <TextBlock Text="{Binding Number}" Foreground="White" FontSize="{StaticResource TextBody}" FontWeight="SemiBold"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Visibility" Value="Collapsed" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding State}" Value="{x:Static status:StepState.Idle}">
+                                                                    <Setter Property="Visibility" Value="Visible" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </Grid>
                                             <StackPanel Grid.Column="1">
-                                                <TextBlock FontSize="15" FontWeight="SemiBold" Style="{StaticResource Primary}">
-                                                    <Run Text="{Binding Ip, Mode=OneWay}" FontFamily="{StaticResource MonoFont}" /><Run Text="   " /><Run Text="{Binding Title, Mode=OneWay}" />
-                                                </TextBlock>
-                                                <TextBlock FontSize="12" Style="{StaticResource Secondary}">
-                                                    <Run Text="{Binding MacText, Mode=OneWay}" /><Run Text="  ·  " /><Run Text="{Binding Vendor, Mode=OneWay}" /><Run Text="  ·  " /><Run Text="{Binding LeaseText, Mode=OneWay}" />
-                                                </TextBlock>
+                                                <TextBlock Text="{Binding Title}" Style="{StaticResource Meta}" FontWeight="Medium" />
+                                                <TextBlock Text="{Binding Reason}" FontSize="{StaticResource TextBody}" LineHeight="24" Style="{StaticResource Primary}" />
+                                                <TextBlock Text="{Binding Action}" FontSize="{StaticResource TextSmall}" FontWeight="Medium" Margin="0,4,0,0" Style="{StaticResource Primary}"
+                                                           Visibility="{Binding Action, Converter={StaticResource VisibleWhen}}" />
+                                                <Expander Header="Details" Margin="0,4,0,0" FontSize="{StaticResource TextMeta}" Foreground="{DynamicResource TextMuted}"
+                                                          Visibility="{Binding Detail, Converter={StaticResource VisibleWhen}}">
+                                                    <TextBox Text="{Binding Detail, Mode=OneWay}" Style="{StaticResource MonoBox}" Margin="0,4,0,0" />
+                                                </Expander>
                                             </StackPanel>
-                                            <TextBlock Grid.Column="2" Text="◀ shown" FontSize="12" VerticalAlignment="Center" Foreground="{DynamicResource AccentBrush}"
-                                                       Visibility="{Binding IsFocused, Converter={StaticResource VisibleWhen}}" />
                                         </Grid>
-                                    </Button>
+                                    </Border>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
-                    </StackPanel>
-                </ScrollViewer>
-            </Border>
+                    </ScrollViewer>
+                </Border>
 
-            <!-- Settings panel (replaces the device panel while open) -->
-            <Border Grid.Column="2" Style="{StaticResource Panel}" Padding="20"
-                    Visibility="{Binding SettingsOpen, Converter={StaticResource VisibleWhen}}">
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <StackPanel DataContext="{Binding Settings}">
-                        <TextBlock Text="SERVER SETTINGS" Style="{StaticResource SectionTitle}" />
-                        <TextBlock Text="Stop the server to change these." FontSize="13" Foreground="{DynamicResource WarnBrush}"
-                                   Visibility="{Binding DataContext.IsRunning, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource VisibleWhen}}" />
-                        <StackPanel IsEnabled="{Binding DataContext.SettingsEditable, RelativeSource={RelativeSource AncestorType=Window}}">
-                            <TextBlock Text="Server IP (set on your adapter)" Style="{StaticResource FieldLabel}" />
-                            <TextBox Text="{Binding ServerIp, UpdateSourceTrigger=PropertyChanged}" FontSize="15" />
-                            <TextBlock Text="Subnet" Style="{StaticResource FieldLabel}" />
-                            <ComboBox ItemsSource="{x:Static vm:SettingsViewModel.Prefixes}" SelectedItem="{Binding Prefix}" FontSize="15" />
-                            <TextBlock Text="Address pool" Style="{StaticResource FieldLabel}" />
-                            <Grid>
-                                <Grid.ColumnDefinitions><ColumnDefinition /><ColumnDefinition Width="Auto" /><ColumnDefinition /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                                <TextBox Text="{Binding PoolStart, UpdateSourceTrigger=PropertyChanged}" FontSize="15" />
-                                <TextBlock Grid.Column="1" Text="to" Margin="8,0" VerticalAlignment="Center" Style="{StaticResource Secondary}" />
-                                <TextBox Grid.Column="2" Text="{Binding PoolEnd, UpdateSourceTrigger=PropertyChanged}" FontSize="15" />
-                                <Button Grid.Column="3" Content="Suggest" Margin="8,0,0,0" Padding="10,4"
-                                        Command="{Binding DataContext.SuggestPoolCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
+                <!-- Device panel -->
+                <Border Grid.Column="2" Style="{StaticResource Panel}" Padding="24">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel>
+                            <Grid Margin="0,0,0,16">
+                                <TextBlock Text="Device" Style="{StaticResource SectionTitle}" />
+                                <TextBlock Text="{Binding DeviceCountText}" HorizontalAlignment="Right" VerticalAlignment="Center" Style="{StaticResource Meta}" />
                             </Grid>
-                            <TextBlock Text="Lease time (minutes)" Style="{StaticResource FieldLabel}" />
-                            <TextBox Text="{Binding LeaseMinutes, UpdateSourceTrigger=PropertyChanged}" FontSize="15" />
-                            <TextBlock Text="Gateway (option 3, optional)" Style="{StaticResource FieldLabel}" />
-                            <TextBox Text="{Binding Router, UpdateSourceTrigger=PropertyChanged}" FontSize="15" />
-                            <TextBlock Text="DNS servers (option 6, optional, comma separated)" Style="{StaticResource FieldLabel}" />
-                            <TextBox Text="{Binding DnsServers, UpdateSourceTrigger=PropertyChanged}" FontSize="15" />
-                            <CheckBox IsChecked="{Binding AlwaysBroadcast}" Margin="0,14,0,0">
-                                <TextBlock Style="{StaticResource Primary}" Text="Always broadcast replies (for devices that never accept an offer)" />
-                            </CheckBox>
-                        </StackPanel>
-                        <TextBlock Text="Theme" Style="{StaticResource FieldLabel}" />
-                        <ComboBox ItemsSource="{x:Static vm:SettingsViewModel.Themes}" SelectedItem="{Binding Theme}" FontSize="15" />
 
-                        <TextBlock Text="{Binding Errors}" Foreground="{DynamicResource BadBrush}" FontSize="14" TextWrapping="Wrap" Margin="0,12,0,0"
-                                   Visibility="{Binding Errors, Converter={StaticResource VisibleWhen}}" />
-                        <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
-                            <Button Content="Save" Style="{StaticResource AccentButton}" Padding="20,8"
-                                    Command="{Binding DataContext.SaveSettingsFormCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
-                            <Button Content="Close" Padding="20,8" Margin="8,0,0,0"
-                                    Command="{Binding DataContext.ToggleSettingsCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
-                            <Button Content="Defaults" Padding="20,8" Margin="8,0,0,0"
-                                    Command="{Binding DataContext.ResetSettingsCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                    IsEnabled="{Binding DataContext.SettingsEditable, RelativeSource={RelativeSource AncestorType=Window}}" />
+                            <!-- No device yet: say what goes here and give the next step -->
+                            <StackPanel Visibility="{Binding FocusedDevice, Converter={StaticResource VisibleWhen}, ConverterParameter=Invert}">
+                                <TextBlock Text="No device has an address yet" FontSize="{StaticResource TextH2}" FontWeight="SemiBold" LineHeight="30" Style="{StaticResource Primary}" />
+                                <TextBlock Margin="0,8,0,0" FontSize="{StaticResource TextBody}" LineHeight="24" MaxWidth="560" HorizontalAlignment="Left">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock" BasedOn="{StaticResource Secondary}">
+                                            <Setter Property="Text" Value="Start the server, then plug in or power-cycle the device. Its IP, name and manufacturer show here as soon as it takes an address." />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsRunning}" Value="True">
+                                                    <Setter Property="Text" Value="The server is listening. Plug in or power-cycle the device: its IP, name and manufacturer show here as soon as it takes an address." />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                                <Button Content="Start server" Style="{StaticResource AccentButton}" HorizontalAlignment="Left" Margin="0,16,0,0"
+                                        Command="{Binding StartStopCommand}"
+                                        Visibility="{Binding IsRunning, Converter={StaticResource VisibleWhen}, ConverterParameter=Invert}" />
+                            </StackPanel>
+
+                            <!-- Focused device -->
+                            <StackPanel DataContext="{Binding FocusedDevice}" Visibility="{Binding Converter={StaticResource VisibleWhen}}">
+                                <TextBlock Text="{Binding Title}" FontSize="{StaticResource TextH2}" FontWeight="SemiBold" LineHeight="30" Style="{StaticResource Primary}" />
+                                <TextBlock Text="{Binding Vendor}" FontSize="{StaticResource TextBody}" Style="{StaticResource Secondary}" />
+                                <Grid Margin="0,16,0,0">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                    <TextBlock Text="{Binding Ip}" FontSize="{StaticResource TextDisplay}" FontWeight="SemiBold" FontFamily="{StaticResource MonoFont}"
+                                               Style="{StaticResource Primary}" VerticalAlignment="Center" AutomationProperties.Name="Device IP address" />
+                                    <Button Grid.Column="1" Style="{StaticResource IconButton}" Content="&#xE8C8;" Margin="16,0,0,0" VerticalAlignment="Center"
+                                            ToolTip="Copy IP address" AutomationProperties.Name="Copy IP address"
+                                            Command="{Binding DataContext.CopyIpCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" />
+                                </Grid>
+                                <Grid Margin="0,16,0,0">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions><RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition /></Grid.RowDefinitions>
+                                    <TextBlock Grid.Row="0" Text="MAC" FontSize="{StaticResource TextSmall}" Style="{StaticResource Secondary}" Margin="0,4,24,4" VerticalAlignment="Center" />
+                                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding MacText}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource TextBody}" Style="{StaticResource Primary}" VerticalAlignment="Center" />
+                                    <TextBlock Grid.Row="1" Text="Lease" FontSize="{StaticResource TextSmall}" Style="{StaticResource Secondary}" Margin="0,4,24,4" VerticalAlignment="Center" />
+                                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding LeaseText}" FontSize="{StaticResource TextBody}" Style="{StaticResource Primary}" VerticalAlignment="Center" />
+                                    <TextBlock Grid.Row="2" Text="Seen" FontSize="{StaticResource TextSmall}" Style="{StaticResource Secondary}" Margin="0,4,24,4" VerticalAlignment="Center" />
+                                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding FirstSeenText}" FontSize="{StaticResource TextBody}" Style="{StaticResource Primary}" VerticalAlignment="Center" />
+                                    <TextBlock Grid.Row="3" Text="Vendor ID" FontSize="{StaticResource TextSmall}" Style="{StaticResource Secondary}" Margin="0,4,24,4" VerticalAlignment="Center"
+                                               Visibility="{Binding VendorClass, Converter={StaticResource VisibleWhen}}" />
+                                    <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding VendorClass}" FontSize="{StaticResource TextBody}" Style="{StaticResource Primary}" VerticalAlignment="Center"
+                                               Visibility="{Binding VendorClass, Converter={StaticResource VisibleWhen}}" />
+                                </Grid>
+                            </StackPanel>
+
+                            <StackPanel Visibility="{Binding FocusedDevice, Converter={StaticResource VisibleWhen}}" Margin="0,24,0,0">
+                                <Button Style="{StaticResource AccentButton}" FontSize="{StaticResource TextH3}" FontWeight="SemiBold" Height="56" HorizontalAlignment="Stretch"
+                                        Command="{Binding OpenWebUiCommand}" ToolTip="Opens the device in your browser (http or https, whichever port is open)">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="&#xE774;" FontFamily="{StaticResource IconFont}" FontSize="{StaticResource TextBody}" VerticalAlignment="Center" Margin="0,0,12,0" />
+                                        <TextBlock Text="Open WebUI" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Button>
+                                <TextBlock Text="{Binding WebUiHint}" Style="{StaticResource Meta}" Margin="0,8,0,0" HorizontalAlignment="Center" />
+                                <TextBlock Text="Or open a specific port" FontSize="{StaticResource TextSmall}" Style="{StaticResource Secondary}" Margin="0,16,0,8" />
+                                <WrapPanel>
+                                    <Button Content="Open http :80" Style="{StaticResource SecondaryButton}" Padding="12,4" Margin="0,0,8,8" Command="{Binding OpenPortCommand}" CommandParameter="http:80" />
+                                    <Button Content="Open https :443" Style="{StaticResource SecondaryButton}" Padding="12,4" Margin="0,0,8,8" Command="{Binding OpenPortCommand}" CommandParameter="https:443" />
+                                    <Button Content="Open http :8080" Style="{StaticResource SecondaryButton}" Padding="12,4" Margin="0,0,8,8" Command="{Binding OpenPortCommand}" CommandParameter="http:8080" />
+                                    <Button Content="Open https :8443" Style="{StaticResource SecondaryButton}" Padding="12,4" Margin="0,0,8,8" Command="{Binding OpenPortCommand}" CommandParameter="https:8443" />
+                                </WrapPanel>
+                            </StackPanel>
+
+                            <!-- All devices (when there's a switch in between) -->
+                            <StackPanel Margin="0,24,0,0" Visibility="{Binding Devices.Count, Converter={StaticResource VisibleWhen}}">
+                                <TextBlock Text="All devices" FontSize="{StaticResource TextBody}" FontWeight="SemiBold" Style="{StaticResource Primary}" Margin="0,0,0,8" />
+                                <Border BorderBrush="{DynamicResource PanelBorder}" BorderThickness="1" CornerRadius="8" Padding="4">
+                                    <ItemsControl ItemsSource="{Binding Devices}" AutomationProperties.Name="All devices">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate DataType="{x:Type vm:DeviceViewModel}">
+                                                <Border BorderBrush="{DynamicResource Hairline}" BorderThickness="0,0,0,1">
+                                                    <Button Command="{Binding DataContext.FocusDeviceCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}"
+                                                            ToolTip="Show this device above" AutomationProperties.Name="{Binding Ip}">
+                                                        <Button.Style>
+                                                            <Style TargetType="Button" BasedOn="{StaticResource RowButton}">
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsFocused}" Value="True">
+                                                                        <Setter Property="Background" Value="{DynamicResource AccentSoft}" />
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Button.Style>
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" />
+                                                            </Grid.ColumnDefinitions>
+                                                            <Ellipse Width="12" Height="12" Margin="0,0,12,0" VerticalAlignment="Center" Fill="{Binding StateColour, Converter={StaticResource StateBrush}}" />
+                                                            <StackPanel Grid.Column="1">
+                                                                <TextBlock FontSize="{StaticResource TextBody}" Style="{StaticResource Primary}" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap">
+                                                                    <Run Text="{Binding Ip, Mode=OneWay}" FontFamily="{StaticResource MonoFont}" FontWeight="SemiBold" /><Run Text="   " /><Run Text="{Binding Title, Mode=OneWay}" />
+                                                                </TextBlock>
+                                                                <TextBlock Style="{StaticResource Meta}" TextTrimming="CharacterEllipsis">
+                                                                    <Run Text="{Binding MacText, Mode=OneWay}" /><Run Text="  ·  " /><Run Text="{Binding Vendor, Mode=OneWay}" /><Run Text="  ·  " /><Run Text="{Binding LeaseText, Mode=OneWay}" />
+                                                                </TextBlock>
+                                                            </StackPanel>
+                                                            <TextBlock Grid.Column="2" Text="&#xE73E;" FontFamily="{StaticResource IconFont}" FontSize="{StaticResource TextBody}" Margin="12,0,0,0"
+                                                                       VerticalAlignment="Center" Foreground="{DynamicResource AccentBrush}" AutomationProperties.Name="Shown above"
+                                                                       Visibility="{Binding IsFocused, Converter={StaticResource VisibleWhen}}" />
+                                                        </Grid>
+                                                    </Button>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </Border>
+                            </StackPanel>
                         </StackPanel>
-                    </StackPanel>
-                </ScrollViewer>
+                    </ScrollViewer>
+                </Border>
+            </Grid>
+
+            <!-- ===== Session log ===== -->
+            <Border Grid.Row="4" Style="{StaticResource Panel}" Padding="16,4" Margin="0,16,0,0">
+                <Expander x:Name="LogExpander" Foreground="{DynamicResource TextSecondary}">
+                    <Expander.Header>
+                        <TextBlock TextTrimming="CharacterEllipsis" FontSize="{StaticResource TextSmall}">
+                            <Run Text="Session log" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}" />
+                            <Run Text="   " /><Run Text="{Binding LatestLogText, Mode=OneWay}" Foreground="{DynamicResource TextMuted}" />
+                        </TextBlock>
+                    </Expander.Header>
+                    <Grid Height="176" Margin="0,8,0,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="2*" />
+                            <ColumnDefinition Width="8" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <ListBox x:Name="LogList" ItemsSource="{Binding LogRows}" Background="{DynamicResource PanelBg}"
+                                 BorderBrush="{DynamicResource PanelBorder}" BorderThickness="1"
+                                 VirtualizingPanel.IsVirtualizing="True" Loaded="OnLogLoaded" AutomationProperties.Name="Session log">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate DataType="{x:Type vm:LogItemViewModel}">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="72" />
+                                            <ColumnDefinition Width="80" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="{Binding Time}" FontFamily="{StaticResource MonoFont}" Style="{StaticResource Meta}" VerticalAlignment="Center" />
+                                        <TextBlock Grid.Column="1" Text="{Binding Category}" FontSize="{StaticResource TextMeta}" FontWeight="SemiBold" VerticalAlignment="Center"
+                                                   Foreground="{Binding Severity, Converter={StaticResource StateBrush}}" />
+                                        <TextBlock Grid.Column="2" Text="{Binding Message}" FontSize="{StaticResource TextSmall}" TextTrimming="CharacterEllipsis"
+                                                   Foreground="{Binding Severity, Converter={StaticResource StateBrush}}" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                        <TextBox Grid.Column="2" Style="{StaticResource MonoBox}" MaxHeight="10000"
+                                 Text="{Binding SelectedItem.Entry, ElementName=LogList, Mode=OneWay, Converter={x:Static local:LogDetailConverter.Instance}, TargetNullValue='Select a log line to see its details.', FallbackValue='Select a log line to see its details.'}" />
+                    </Grid>
+                </Expander>
             </Border>
         </Grid>
 
-        <!-- ===== Session log ===== -->
-        <Expander x:Name="LogExpander" Grid.Row="4" Margin="0,12,0,0" Foreground="{DynamicResource TextSecondary}">
-            <Expander.Header>
-                <TextBlock TextTrimming="CharacterEllipsis">
-                    <Run Text="Session log" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondary}" />
-                    <Run Text="   " /><Run Text="{Binding LatestLogText, Mode=OneWay}" Foreground="{DynamicResource TextMuted}" />
-                </TextBlock>
-            </Expander.Header>
-            <Grid Height="170" Margin="0,6,0,0">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="2*" />
-                    <ColumnDefinition Width="10" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-                <ListBox x:Name="LogList" ItemsSource="{Binding LogRows}" Background="{DynamicResource PanelBg}"
-                         VirtualizingPanel.IsVirtualizing="True" Loaded="OnLogLoaded">
-                    <ListBox.ItemTemplate>
-                        <DataTemplate DataType="{x:Type vm:LogItemViewModel}">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="70" />
-                                    <ColumnDefinition Width="74" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="{Binding Time}" FontFamily="{StaticResource MonoFont}" Foreground="{DynamicResource TextMuted}" />
-                                <TextBlock Grid.Column="1" Text="{Binding Category}" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center"
-                                           Foreground="{Binding Severity, Converter={StaticResource StateBrush}}" />
-                                <TextBlock Grid.Column="2" Text="{Binding Message}" TextTrimming="CharacterEllipsis"
-                                           Foreground="{Binding Severity, Converter={StaticResource StateBrush}}" />
-                            </Grid>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                </ListBox>
-                <TextBox Grid.Column="2" Style="{StaticResource MonoBox}" MaxHeight="10000"
-                         Text="{Binding SelectedItem.Entry, ElementName=LogList, Mode=OneWay, Converter={x:Static local:LogDetailConverter.Instance}, TargetNullValue='Select a log line to see its details.', FallbackValue='Select a log line to see its details.'}" />
-            </Grid>
-        </Expander>
+        <!-- ===== Settings slide-over: the status stays visible behind it ===== -->
+        <Grid x:Name="SettingsLayer" Visibility="{Binding SettingsOpen, Converter={StaticResource VisibleWhen}}">
+            <Border Background="{DynamicResource Scrim}" MouseLeftButtonDown="OnScrimClicked" />
+            <Border x:Name="SettingsPanel" Width="440" HorizontalAlignment="Right"
+                    Background="{DynamicResource OverlayBg}" BorderBrush="{DynamicResource OverlayBorder}" BorderThickness="1,0,0,0"
+                    KeyboardNavigation.TabNavigation="Cycle" KeyboardNavigation.ControlTabNavigation="Cycle"
+                    AutomationProperties.Name="Server settings">
+                <Border.RenderTransform>
+                    <TranslateTransform x:Name="SettingsSlide" />
+                </Border.RenderTransform>
+                <DockPanel DataContext="{Binding Settings}">
+                    <!-- Header -->
+                    <Grid DockPanel.Dock="Top" Margin="24,16,16,8">
+                        <TextBlock Text="Server settings" Style="{StaticResource SectionTitle}" VerticalAlignment="Center" />
+                        <Button x:Name="CloseSettingsButton" Style="{StaticResource IconButton}" Content="&#xE711;" HorizontalAlignment="Right"
+                                Command="{Binding DataContext.CloseSettingsCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                ToolTip="Close settings (Esc)" AutomationProperties.Name="Close settings" />
+                    </Grid>
+
+                    <!-- Footer: always clickable; Save shows what needs fixing -->
+                    <Border DockPanel.Dock="Bottom" BorderBrush="{DynamicResource Hairline}" BorderThickness="0,1,0,0" Padding="24,16">
+                        <StackPanel Orientation="Horizontal">
+                            <Button Content="Save settings" Style="{StaticResource AccentButton}"
+                                    Command="{Binding DataContext.SaveSettingsFormCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
+                            <Button Content="Reset to defaults" Style="{StaticResource SecondaryButton}" Margin="8,0,0,0"
+                                    Command="{Binding DataContext.ResetSettingsCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                    IsEnabled="{Binding DataContext.SettingsEditable, RelativeSource={RelativeSource AncestorType=Window}}" />
+                        </StackPanel>
+                    </Border>
+
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="24,0,24,16">
+                        <StackPanel>
+                            <Border Style="{StaticResource Banner}" Margin="0,8,0,0" Background="{DynamicResource WarnSoft}" BorderBrush="{DynamicResource WarnBrush}"
+                                    Visibility="{Binding DataContext.IsRunning, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource VisibleWhen}}">
+                                <TextBlock Text="The server is running. Stop it to change these; the theme can change any time." FontSize="{StaticResource TextSmall}" Style="{StaticResource Primary}" />
+                            </Border>
+
+                            <StackPanel x:Name="SettingsForm" IsEnabled="{Binding DataContext.SettingsEditable, RelativeSource={RelativeSource AncestorType=Window}}">
+                                <Label Content="_Server IP" Target="{Binding ElementName=ServerIpBox}" Style="{StaticResource FieldLabel}" />
+                                <TextBox x:Name="ServerIpBox" Text="{Binding ServerIp, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" />
+                                <TextBlock Text="Set on your adapter while the server runs, and put back on Stop." Style="{StaticResource FieldHelp}" />
+
+                                <Label Content="Su_bnet" Target="{Binding ElementName=PrefixBox}" Style="{StaticResource FieldLabel}" />
+                                <ComboBox x:Name="PrefixBox" ItemsSource="{x:Static vm:SettingsViewModel.Prefixes}" SelectedItem="{Binding Prefix}" FontSize="{StaticResource TextBody}" HorizontalAlignment="Stretch" />
+
+                                <Label Content="Address _pool" Target="{Binding ElementName=PoolStartBox}" Style="{StaticResource FieldLabel}" />
+                                <Grid>
+                                    <Grid.ColumnDefinitions><ColumnDefinition /><ColumnDefinition Width="Auto" /><ColumnDefinition /></Grid.ColumnDefinitions>
+                                    <TextBox x:Name="PoolStartBox" Text="{Binding PoolStart, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}"
+                                             AutomationProperties.Name="First address in the pool" />
+                                    <TextBlock Grid.Column="1" Text="to" Margin="8,0" VerticalAlignment="Center" FontSize="{StaticResource TextSmall}" Style="{StaticResource Secondary}" />
+                                    <TextBox Grid.Column="2" Text="{Binding PoolEnd, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}"
+                                             AutomationProperties.Name="Last address in the pool" />
+                                </Grid>
+                                <Button Content="Suggest a pool for this subnet" Style="{StaticResource SecondaryButton}" Padding="12,4" Margin="0,8,0,0" HorizontalAlignment="Left"
+                                        Command="{Binding DataContext.SuggestPoolCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
+
+                                <Label Content="_Lease time (minutes)" Target="{Binding ElementName=LeaseBox}" Style="{StaticResource FieldLabel}" />
+                                <TextBox x:Name="LeaseBox" Text="{Binding LeaseMinutes, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" />
+
+                                <Label Content="_Gateway (optional)" Target="{Binding ElementName=RouterBox}" Style="{StaticResource FieldLabel}" />
+                                <TextBox x:Name="RouterBox" Text="{Binding Router, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" />
+                                <TextBlock Text="DHCP option 3. Leave empty unless the device needs a route off this subnet." Style="{StaticResource FieldHelp}" />
+
+                                <Label Content="_DNS servers (optional)" Target="{Binding ElementName=DnsBox}" Style="{StaticResource FieldLabel}" />
+                                <TextBox x:Name="DnsBox" Text="{Binding DnsServers, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" />
+                                <TextBlock Text="DHCP option 6. Separate several with commas, like 8.8.8.8, 1.1.1.1" Style="{StaticResource FieldHelp}" />
+
+                                <CheckBox IsChecked="{Binding AlwaysBroadcast}" Margin="0,16,0,0">
+                                    <TextBlock Style="{StaticResource Primary}" FontSize="{StaticResource TextSmall}"
+                                               Text="Always broadcast replies (for devices that never accept an offer)" />
+                                </CheckBox>
+                            </StackPanel>
+
+                            <Label Content="_Theme" Target="{Binding ElementName=ThemeBox}" Style="{StaticResource FieldLabel}" Margin="0,24,0,4" />
+                            <ComboBox x:Name="ThemeBox" ItemsSource="{x:Static vm:SettingsViewModel.Themes}" SelectedItem="{Binding Theme}" FontSize="{StaticResource TextBody}" HorizontalAlignment="Stretch" />
+
+                            <Border Style="{StaticResource Banner}" Margin="0,16,0,0" Background="{DynamicResource BadSoft}" BorderBrush="{DynamicResource BadBrush}"
+                                    Visibility="{Binding Errors, Converter={StaticResource VisibleWhen}}">
+                                <TextBlock Text="{Binding Errors}" FontSize="{StaticResource TextSmall}" Style="{StaticResource Primary}"
+                                           AutomationProperties.LiveSetting="Polite" />
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+                </DockPanel>
+            </Border>
+        </Grid>
     </Grid>
 </Window>
