@@ -41,6 +41,8 @@ Most AV kit ships set to DHCP, and on a bench or a fresh site there's usually no
 
   Each preset's pool leaves the documented factory addresses free. Presets can't be changed: duplicate one to make your own.
 
+![The Profiles panel with the Default preset and links to the manufacturers' documentation](docs/images/profiles-panel-dark.png)
+
 **Default profile:** server IP `192.168.100.1/24`, addresses `192.168.100.100` to `192.168.100.199`, 60-minute leases. Make your own profile under **Profiles** (the gear button) to change any of these.
 
 ## Download and run
@@ -120,7 +122,7 @@ dotnet publish src/ProDHCPServer.App -c Release -r win-x64 -o publish
 | `src/ProDHCPServer.Windows` | Windows specifics: adapter reading and changes, the UDP 67 socket, ARP entries, firewall rule, other-server probe, ping and port checks. |
 | `src/ProDHCPServer.App` | The WPF app: UI, elevation prompt, crash handling. |
 | `tests/` | Core unit tests (run anywhere) and Windows integration tests (run on the Windows CI runner and never change adapter settings). |
-| `docs/` | Hardware test checklists for each phase, and the screenshot used in this README. |
+| `docs/` | Hardware test checklists for each phase, and the screenshots used in this README (taken by the CI smoke test). |
 | `tools/` | CI smoke test (launches the app and takes screenshots) and the manufacturer list updater (`python3 tools/update-oui.py`). |
 
 **CI.** Every push and pull request runs the **Build and test** workflow on Windows: build, Core and Windows tests, publish the exe, and a smoke test that screenshots the app in light and dark mode. The exe and screenshots are uploaded as run artifacts.
