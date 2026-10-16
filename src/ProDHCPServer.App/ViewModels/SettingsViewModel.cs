@@ -16,6 +16,7 @@ public interface ISettingsDialogs
     bool Confirm(string title, string message, string confirmText);
     string? OpenFile(string title, string filter);
     string? SaveFile(string title, string filter, string fileName);
+    void OpenUrl(string url);
 }
 
 public sealed record ProfileItem(string Name, bool IsPreset)
@@ -113,6 +114,8 @@ public sealed partial class SettingsViewModel : ObservableObject
     [ObservableProperty] private string _errors = "";
     /// <summary>A one-off message after import/export/delete.</summary>
     [ObservableProperty] private string _notice = "";
+    /// <summary>Where the selected profile's values come from (the manufacturers' pages, for presets).</summary>
+    [ObservableProperty] private IReadOnlyList<ProfileSource> _sources = [];
 
     public bool IsPreset => SelectedProfile.IsPreset;
     public bool CanEdit => !IsPreset && !IsLocked;
@@ -188,6 +191,7 @@ public sealed partial class SettingsViewModel : ObservableObject
             Option150 = p.TftpServers ?? "";
             Option43 = p.VendorSpecificHex ?? "";
             AlwaysBroadcast = p.AlwaysBroadcast;
+            Sources = p.Sources;
             foreach (var row in CustomOptions) row.PropertyChanged -= OnRowChanged;
             CustomOptions.Clear();
             foreach (var c in p.CustomOptions) AddRow(new CustomOptionRow { Code = c.Code.ToString(), Format = c.Format, Value = c.Value });
@@ -248,6 +252,7 @@ public sealed partial class SettingsViewModel : ObservableObject
             VendorSpecificHex = Blank(Option43),
             CustomOptions = custom,
             AlwaysBroadcast = AlwaysBroadcast,
+            Sources = Sources,
         };
     }
 
@@ -392,6 +397,14 @@ public sealed partial class SettingsViewModel : ObservableObject
         {
             Notice = $"Couldn't write {Path.GetFileName(path)}: {ex.Message}";
         }
+    }
+
+    [RelayCommand]
+    private void OpenSource(ProfileSource? source)
+    {
+        // Only web pages: a profile file someone sent could name anything here.
+        if (source is null || !Uri.TryCreate(source.Url, UriKind.Absolute, out var uri) || uri.Scheme != Uri.UriSchemeHttps) return;
+        _dialogs?.OpenUrl(uri.AbsoluteUri);
     }
 
     [RelayCommand(CanExecute = nameof(CanEdit))]

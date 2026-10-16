@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Windows;
 using Microsoft.Win32;
 using ProDHCPServer.App.ViewModels;
@@ -19,5 +20,12 @@ public sealed class WindowDialogs(Window owner) : ISettingsDialogs
     {
         var dialog = new SaveFileDialog { Title = title, Filter = filter, FileName = fileName, AddExtension = true, DefaultExt = ".json" };
         return dialog.ShowDialog(owner) == true ? dialog.FileName : null;
+    }
+
+    /// <summary>Opens a web page through Explorer so the browser runs as the normal user, not elevated like this app.</summary>
+    public void OpenUrl(string url)
+    {
+        try { Process.Start(new ProcessStartInfo("explorer.exe", $"\"{url}\"") { UseShellExecute = false }); }
+        catch (System.ComponentModel.Win32Exception) { /* nothing useful to add: the link text is on screen */ }
     }
 }

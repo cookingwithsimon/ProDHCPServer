@@ -6,6 +6,7 @@
         xmlns:local="clr-namespace:ProDHCPServer.App"
         xmlns:vm="clr-namespace:ProDHCPServer.App.ViewModels"
         xmlns:status="clr-namespace:ProDHCPServer.Core.Status;assembly=ProDHCPServer.Core"
+        xmlns:core="clr-namespace:ProDHCPServer.Core.Profiles;assembly=ProDHCPServer.Core"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type=vm:MainViewModel}"
         Title="ProDHCPServer" Width="1320" Height="860" MinWidth="900" MinHeight="600"
@@ -82,7 +83,7 @@
 
                 <Label Grid.Column="2" Content="P_rofile" Target="{Binding ElementName=ProfilePicker}" VerticalAlignment="Center" Padding="0" Margin="24,0,16,0"
                        FontSize="{StaticResource TextBody}" FontWeight="Medium" Foreground="{DynamicResource TextSecondary}" />
-                <ComboBox x:Name="ProfilePicker" Grid.Column="3" Width="220" MinHeight="56" FontSize="{StaticResource TextBody}" VerticalContentAlignment="Center"
+                <ComboBox x:Name="ProfilePicker" Grid.Column="3" Width="260" MinHeight="56" FontSize="{StaticResource TextBody}" VerticalContentAlignment="Center"
                           ItemsSource="{Binding Settings.Profiles}" SelectedItem="{Binding Settings.SelectedProfile}" DisplayMemberPath="Display"
                           IsEnabled="{Binding SettingsEditable}" ToolTip="The saved settings Start uses: subnet, pool, lease time and DHCP options" />
 
@@ -538,7 +539,21 @@
                                     Visibility="{Binding IsPreset, Converter={StaticResource VisibleWhen}}">
                                 <StackPanel>
                                     <TextBlock Text="{Binding Notes}" FontSize="{StaticResource TextBody}" Style="{StaticResource Primary}" />
-                                    <TextBlock Text="This is a preset, so it can't be changed. Press Duplicate to make your own copy." Margin="0,8,0,0"
+                                    <TextBlock Text="From the manufacturers' documentation:" Margin="0,12,0,4" FontSize="{StaticResource TextSmall}" Style="{StaticResource Secondary}"
+                                               Visibility="{Binding Sources.Count, Converter={StaticResource VisibleWhen}}" />
+                                    <ItemsControl ItemsSource="{Binding Sources}" AutomationProperties.Name="Sources">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate DataType="{x:Type core:ProfileSource}">
+                                                <TextBlock FontSize="{StaticResource TextSmall}" Margin="0,2" TextWrapping="Wrap">
+                                                    <Hyperlink Command="{Binding DataContext.OpenSourceCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}"
+                                                               ToolTip="{Binding Url}" Foreground="{DynamicResource TextPrimary}">
+                                                        <Run Text="{Binding Title, Mode=OneWay}" />
+                                                    </Hyperlink>
+                                                </TextBlock>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                    <TextBlock Text="This is a preset, so it can't be changed. Press Duplicate to make your own copy." Margin="0,12,0,0"
                                                FontSize="{StaticResource TextSmall}" Style="{StaticResource Secondary}" TextWrapping="Wrap" />
                                 </StackPanel>
                             </Border>

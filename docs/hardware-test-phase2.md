@@ -22,10 +22,10 @@ Tick each box. If something fails, use **Export log…** (section 2) and send me
 - [ ] **Export log…** as **CSV**. Open it in Excel: columns Time, Severity, Category, Message, Detail, one row per entry, nothing garbled.
 
 ## 3. Profiles
-- [ ] The top bar has a **Profile** box showing "Default (preset)". Open it: the five presets are listed.
-- [ ] Pick **Extron factory subnet**. The status line says Start will set 192.168.254.1/24. Press **Start**: the devices get 192.168.254.100 and up. Press **Stop**.
-- [ ] Press the gear button. The panel is titled **Profiles**, shows the preset's note, and its fields are greyed out with "This is a preset… Press Duplicate".
-- [ ] Press **Duplicate**: "Extron factory subnet copy" is created and selected, and the fields can now be changed. Rename it (for example "Bench rack") and set the pool to .150 to .160. Press **Save profile**.
+- [ ] The top bar has a **Profile** box showing "Default (preset)". Open it: seven presets are listed.
+- [ ] Pick **192.168.254.x: Extron**. The status line says Start will set 192.168.254.1/24. Press **Start**: the devices get 192.168.254.100 and up. Press **Stop**.
+- [ ] Press the gear button. The panel is titled **Profiles**, shows the preset's note and links to the Extron guides it comes from (click one: it opens in your browser), and its fields are greyed out with "This is a preset… Press Duplicate".
+- [ ] Press **Duplicate**: "192.168.254.x: Extron copy" is created and selected, and the fields can now be changed. Rename it (for example "Bench rack") and set the pool to .150 to .160. Press **Save profile**.
 - [ ] Type a bad value (pool end 192.168.1.5) and click into another field: a red box explains the problem. **Discard changes** puts the saved values back.
 - [ ] Open **More DHCP options** and set NTP to 192.168.254.1. **Add an option** with code 66 and click into another field: a red box says option 66 has its own field. Change the code to 160, type Text, value `http://192.168.254.1/`. Save.
 - [ ] Start with this profile. In the log, select the ACK line for a device: the detail shows options 42 and 160 were sent. Stop.

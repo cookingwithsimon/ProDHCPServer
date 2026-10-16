@@ -29,6 +29,34 @@ public class ProfileTests : IDisposable
         Assert.Equal(ProfilePresets.All.Count, ProfilePresets.All.Select(p => p.Name.ToLowerInvariant()).Distinct().Count());
     }
 
+    [Theory]
+    // Factory addresses from the manufacturers' documentation (see the preset sources).
+    [InlineData("192.168.254.x: Extron", new[] { "192.168.254.254", "192.168.254.250" })]
+    [InlineData("192.168.0.x: Lightware, Christie, Sharp/NEC, Bose", new[] { "192.168.0.100", "192.168.0.10", "192.168.0.160", "192.168.0.40", "192.168.0.80", "192.168.0.176" })]
+    [InlineData("192.168.1.x: Kramer, Atlona, ClickShare, AMX", new[] { "192.168.1.39", "192.168.1.150", "192.168.1.23", "192.168.1.3" })]
+    public void Brand_presets_reach_factory_addresses_without_handing_them_out(string name, string[] factory)
+    {
+        var preset = ProfilePresets.All.Single(p => p.Name == name);
+        var config = preset.ToConfig().Config!;
+        foreach (var ip in factory.Select(IPv4.Parse))
+        {
+            Assert.True(config.InSubnet(ip), $"{ip} should be reachable from {preset.Summary}");
+            Assert.False(config.InPool(ip), $"{ip} must not be handed out by {preset.Name}");
+            Assert.NotEqual(ip, config.ServerIp);
+        }
+    }
+
+    [Fact]
+    public void Brand_presets_cite_the_manufacturer()
+    {
+        foreach (var preset in ProfilePresets.All.Where(p => p.Name != "Bench test (2-minute leases)"))
+        {
+            Assert.NotEmpty(preset.Sources);
+            Assert.All(preset.Sources, s => Assert.StartsWith("https://", s.Url));
+            Assert.All(preset.Sources, s => Assert.True(Uri.IsWellFormedUriString(s.Url, UriKind.Absolute), s.Url));
+        }
+    }
+
     [Fact]
     public void Extra_options_reach_the_offer()
     {

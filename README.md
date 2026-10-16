@@ -31,7 +31,14 @@ Most AV kit ships set to DHCP, and on a bench or a fresh site there's usually no
 - **Live ping graph for every device.** Each device with a lease is pinged once a second. The device list shows a small latency graph with the latest reply time, and the selected device shows the last two minutes with average, min, max and loss. Missed replies show as red marks. When a device stops answering, or starts again, the session log records it.
 - **Session log you can filter and export.** Filter by level (everything, warnings and problems, problems only), by area (adapter, server, DHCP, device) or by text such as an IP or MAC address. **Export log…** saves what's shown as a text file for a job report, or as CSV for Excel.
 - **Profiles.** Save the subnet, pool, lease time and DHCP options for each job or kind of gear, and pick one from the top bar before pressing Start. Options: gateway (3), DNS (6), domain name (15), NTP (42), vendor-specific (43, hex), TFTP/provisioning server (66), Cisco TFTP servers (150) and any other option as text, IP addresses or hex. Profiles can be duplicated, deleted, exported to a file and imported on another laptop.
-- **Presets** to start from: Default, Extron factory subnet (192.168.254.x, so a factory-reset unit at 192.168.254.254 is reachable), Cisco IP phones (option 150), Poly phones (option 66) and a bench test with 2-minute leases. Presets can't be changed: duplicate one to make your own.
+- **Presets** built from each manufacturer's own documentation, with links to the pages they come from:
+  - Default (192.168.100.x), for the gear that asks for DHCP out of the box: Q-SYS, Biamp, Shure, Sennheiser, Dante, Symetrix, Crestron, AMX, Kramer, Atlona and Extron NAV.
+  - 192.168.254.x for Extron switchers (192.168.254.254) and IPCP Pro (192.168.254.250).
+  - 192.168.0.x for Lightware, Christie GS, Sharp/NEC MultiSync M and Bose ESP/PowerMatch/CC-64.
+  - 192.168.1.x for the Kramer and Atlona fallback addresses, ClickShare direct connection and AMX NX static.
+  - Cisco IP phones (option 150), Poly phones (option 66), and a bench test with 2-minute leases.
+
+  Each preset's pool leaves the documented factory addresses free. Presets can't be changed: duplicate one to make your own.
 
 **Default profile:** server IP `192.168.100.1/24`, addresses `192.168.100.100` to `192.168.100.199`, 60-minute leases. Make your own profile under **Profiles** (the gear button) to change any of these.
 

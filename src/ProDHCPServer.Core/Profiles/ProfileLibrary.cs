@@ -215,6 +215,7 @@ public sealed class ProfileLibrary
         Name = (p.Name ?? "").Trim(),
         IsPreset = false,
         CustomOptions = p.CustomOptions ?? [],
+        Sources = p.Sources ?? [],
         ServerIp = p.ServerIp ?? "",
         PoolStart = p.PoolStart ?? "",
         PoolEnd = p.PoolEnd ?? "",

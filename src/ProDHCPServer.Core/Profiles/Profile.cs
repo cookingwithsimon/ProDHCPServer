@@ -20,6 +20,9 @@ public enum CustomOptionFormat
 /// <summary>A DHCP option that has no field of its own in the profile form.</summary>
 public sealed record CustomOption(byte Code, CustomOptionFormat Format, string Value);
 
+/// <summary>Where a preset's values come from: a page on the manufacturer's own site.</summary>
+public sealed record ProfileSource(string Title, string Url);
+
 /// <summary>
 /// A saved set of server settings: subnet, pool, lease time and the options handed to devices.
 /// Strings are kept as typed so a half-finished profile can still be saved and fixed later;
@@ -50,6 +53,8 @@ public sealed record Profile
     public string? VendorSpecificHex { get; init; }
     public IReadOnlyList<CustomOption> CustomOptions { get; init; } = [];
     public bool AlwaysBroadcast { get; init; }
+    /// <summary>Documentation the values come from (shipped presets cite the manufacturers).</summary>
+    public IReadOnlyList<ProfileSource> Sources { get; init; } = [];
 
     /// <summary>Shipped with the app; read-only. Duplicate it to change it.</summary>
     [JsonIgnore] public bool IsPreset { get; init; }
