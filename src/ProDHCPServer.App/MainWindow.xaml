@@ -112,7 +112,7 @@
             </Grid>
 
             <!-- ===== Status: the one line that matters, readable from across the rack ===== -->
-            <Border Grid.Row="1" CornerRadius="8" Padding="24,16" Margin="0,0,0,16" BorderThickness="1"
+            <Border Grid.Row="1" CornerRadius="8" Padding="24,12" Margin="0,0,0,16" BorderThickness="1"
                     Background="{Binding HeadlineState, Converter={StaticResource StateBrush}, ConverterParameter=Soft}"
                     BorderBrush="{Binding HeadlineState, Converter={StaticResource StateBrush}}">
                 <Grid>
@@ -120,7 +120,7 @@
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <Grid Width="56" Height="56" Margin="0,0,24,0" VerticalAlignment="Center"
+                    <Grid Width="48" Height="48" Margin="0,0,24,0" VerticalAlignment="Center"
                           AutomationProperties.Name="{Binding HeadlineState, Converter={StaticResource StateWord}}">
                         <Ellipse Fill="{Binding HeadlineState, Converter={StaticResource StateBrush}}" />
                         <TextBlock Text="{Binding HeadlineState, Converter={StaticResource StateGlyph}, ConverterParameter=Hero}"
@@ -218,11 +218,11 @@
 
                 <!-- Status checks: the chain from adapter to device, numbered in the order a tech would check them -->
                 <Border Style="{StaticResource Panel}" Padding="0">
-                    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="8">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="4">
                         <ItemsControl ItemsSource="{Binding Steps}" AutomationProperties.Name="Status checks">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate DataType="{x:Type vm:StepViewModel}">
-                                    <Border Padding="8" CornerRadius="4"
+                                    <Border Padding="12,4" CornerRadius="4"
                                             Background="{Binding State, Converter={StaticResource StateBrush}, ConverterParameter=Issue}">
                                         <Grid>
                                             <Grid.ColumnDefinitions>
@@ -391,7 +391,7 @@
             </Grid>
 
             <!-- ===== Session log ===== -->
-            <Border Grid.Row="4" Style="{StaticResource Panel}" Padding="16,4" Margin="0,16,0,0">
+            <Border Grid.Row="4" Style="{StaticResource Panel}" Padding="16,0" Margin="0,16,0,0">
                 <Expander x:Name="LogExpander" Foreground="{DynamicResource TextSecondary}">
                     <Expander.Header>
                         <TextBlock TextTrimming="CharacterEllipsis" FontSize="{StaticResource TextSmall}">
