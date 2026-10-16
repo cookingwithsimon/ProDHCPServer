@@ -72,7 +72,7 @@ Each phase ends with a hardware test pass on real AV equipment before the next o
 | Your settings | `%LOCALAPPDATA%\ProDHCPServer\settings.json` |
 | Adapter backup (only while a session runs, or after a crash) | `%ProgramData%\ProDHCPServer\adapter-backup.json` |
 
-While serving, the app also adds a Windows Firewall rule that lets only ProDHCPServer receive on UDP ports 67 and 68, and removes it on Stop.
+While serving, the app also adds a Windows Firewall rule so it can receive DHCP traffic (UDP 67 and 68, for this exe only), and removes the rule on Stop.
 
 ## For developers
 
