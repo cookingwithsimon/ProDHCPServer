@@ -55,10 +55,9 @@ Most AV kit ships set to DHCP, and on a bench or a fresh site there's usually no
 
 ## Download and run
 
-1. Open the [Actions tab](https://github.com/cookingwithsimon/ProDHCPServer/actions/workflows/build.yml), pick the latest green **Build and test** run, and download **ProDHCPServer-win-x64** under Artifacts.
-2. Unzip it. You get a single `ProDHCPServer.exe`; there's nothing to install and no .NET runtime needed.
-3. Double-click it. Windows asks for administrator rights, because changing adapter settings and serving DHCP require them.
-4. The exe isn't code-signed yet, so the first time Windows SmartScreen says "Windows protected your PC". Click **More info**, then **Run anyway**.
+1. Open the [latest release](https://github.com/cookingwithsimon/ProDHCPServer/releases/latest) and download the exe under **Assets** (for example `ProDHCPServer-v1.0.0-win-x64.exe`). It's a single file: there's nothing to unzip or install, and no .NET runtime needed.
+2. Double-click it. Windows asks for administrator rights, because changing adapter settings and serving DHCP require them.
+3. The exe isn't code-signed yet, so the first time Windows SmartScreen says "Windows protected your PC". Click **More info**, then **Run anyway**.
 
 ## Using it
 
@@ -134,7 +133,7 @@ dotnet publish src/ProDHCPServer.App -c Release -r win-x64 -o publish
 | `docs/` | Hardware test checklists for each phase, the sources for the discovery protocols (`vendor-discovery.md`), and the screenshots used in this README (taken by the CI smoke test). |
 | `tools/` | CI smoke test (launches the app and takes screenshots) and the manufacturer list updater (`python3 tools/update-oui.py`). |
 
-**CI.** Every push and pull request runs the **Build and test** workflow on Windows: build, Core and Windows tests, publish the exe, and a smoke test that screenshots the app in light and dark mode. The exe and screenshots are uploaded as run artifacts.
+**CI.** Every push and pull request runs the **Build and test** workflow on Windows: build, Core and Windows tests, publish the exe, and a smoke test that screenshots the app in light and dark mode. The exe and screenshots are uploaded as run artifacts, so you can try a build from any branch before it's released.
 
 **Contributing.** Work happens on branches with pull requests into `main`. See [CLAUDE.md](CLAUDE.md) for the project rules (they apply to people too), and use the PR template's checklist. Formatting follows `.editorconfig`; check it with `dotnet format whitespace ProDHCPServer.sln --verify-no-changes`.
 
