@@ -94,9 +94,9 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
                         <Grid>
-                            <Border x:Name="Ring" Margin="-4" CornerRadius="999" BorderThickness="2" BorderBrush="Transparent" />
-                            <Border x:Name="Bg" CornerRadius="999" Background="{TemplateBinding Background}" />
-                            <Border x:Name="Tint" CornerRadius="999" Background="{TemplateBinding Foreground}" Opacity="0" />
+                            <Border x:Name="Ring" Margin="-4" CornerRadius="{Binding ActualHeight, RelativeSource={RelativeSource Self}, Converter={x:Static local:PillRadiusConverter.Instance}}" BorderThickness="2" BorderBrush="Transparent" />
+                            <Border x:Name="Bg" CornerRadius="{Binding ActualHeight, RelativeSource={RelativeSource Self}, Converter={x:Static local:PillRadiusConverter.Instance}}" Background="{TemplateBinding Background}" />
+                            <Border x:Name="Tint" CornerRadius="{Binding ActualHeight, RelativeSource={RelativeSource Self}, Converter={x:Static local:PillRadiusConverter.Instance}}" Background="{TemplateBinding Foreground}" Opacity="0" />
                             <ContentPresenter Margin="{TemplateBinding Padding}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="Center"
                                               TextElement.Foreground="{TemplateBinding Foreground}" RecognizesAccessKey="True" />
                         </Grid>

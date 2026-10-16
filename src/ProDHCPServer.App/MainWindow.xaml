@@ -116,7 +116,7 @@
             </Grid>
 
             <!-- ===== Status field: one line, readable from across the rack, beside a giant status light ===== -->
-            <Border Grid.Row="1" Margin="0,0,0,16" ClipToBounds="True" MinHeight="112"
+            <Border Grid.Row="1" Margin="0,0,0,16" ClipToBounds="True" MinHeight="104"
                     Background="{Binding HeadlineState, Converter={StaticResource StateBrush}, ConverterParameter=Soft}">
                 <Grid>
                     <!-- The light: cropped by the right edge of the field. Its colour is the state. -->
@@ -126,7 +126,7 @@
                                FontFamily="{StaticResource IconFont}" FontSize="{StaticResource TextHead}" Foreground="White"
                                HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,70,0"
                                AutomationProperties.Name="{Binding HeadlineState, Converter={StaticResource StateWord}}" />
-                    <StackPanel VerticalAlignment="Center" Margin="32,24,232,24">
+                    <StackPanel VerticalAlignment="Center" Margin="32,16,232,16">
                         <TextBlock Text="{Binding HeadlineText}" FontFamily="{StaticResource DisplayFont}" FontSize="{StaticResource TextHead}" FontWeight="Bold"
                                    LineHeight="44" LineStackingStrategy="BlockLineHeight" Style="{StaticResource Primary}"
                                    AutomationProperties.LiveSetting="Assertive" />

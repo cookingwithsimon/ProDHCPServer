@@ -99,3 +99,14 @@ public sealed class LogDetailConverter : IValueConverter
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotSupportedException();
 }
+
+/// <summary>ActualHeight → a corner radius of half the height, so a Border is a true pill or circle at any size.</summary>
+public sealed class PillRadiusConverter : IValueConverter
+{
+    public static readonly PillRadiusConverter Instance = new();
+
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture) =>
+        new CornerRadius(value is double h && h > 0 ? h / 2 : 0);
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotSupportedException();
+}
