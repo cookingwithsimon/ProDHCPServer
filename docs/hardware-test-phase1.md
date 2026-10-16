@@ -56,3 +56,6 @@ Tick each box. If something fails, open the **Session log**, select the red line
 
 ## What to send back
 For anything that failed: which step, what you expected, and the log details text. The adapter's original settings are also kept in `C:\ProgramData\ProDHCPServer\adapter-backup.json` while a session is running.
+
+## Results
+Passed 2026-10-16 (every section). Section 5 was tested against a test DHCP server on a second laptop on the same switch; **Serve anyway** wasn't tried because it wasn't our network. Lesson from the run: a Realtek RTL8153 USB adapter on Windows' 2015 inbox driver stopped receiving after a few seconds while the link stayed up. Realtek's current driver fixed it, and the app now warns about that driver and spots the stall itself.

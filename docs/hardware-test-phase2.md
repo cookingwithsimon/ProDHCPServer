@@ -2,7 +2,7 @@
 
 About 20 minutes. You need: the unmanaged laptop, two AV devices on a small unmanaged switch (the NAV E and Desk Pro are ideal), and a USB stick or a second laptop for the profile import step if you have one.
 
-Download `ProDHCPServer.exe` from the latest successful **Build and test** run on the Phase 2 pull request (Actions tab → run → Artifacts → `ProDHCPServer-win-x64`). Click **More info → Run anyway** on the SmartScreen warning.
+Download `ProDHCPServer.exe` from the latest successful **Build and test** run on `main` (Actions tab → run → Artifacts → `ProDHCPServer-win-x64`). Click **More info → Run anyway** on the SmartScreen warning.
 
 Tick each box. If something fails, use **Export log…** (section 2) and send me the file.
 
@@ -36,3 +36,6 @@ Tick each box. If something fails, use **Export log…** (section 2) and send me
 
 ## 4. Phase 1 still works
 - [ ] Quick repeat of the Phase 1 main case: one device straight on the cable, Start, lease, ping and WebUI green, **Open WebUI**, Stop, adapter back to its original settings.
+
+## Results
+Passed 2026-10-16 (every item), on an unmanaged laptop with an Extron NAV SD 101 decoder and NAV E 101 encoder on an unmanaged switch. Pings to both NAV units averaged about 200 ms (up to about 600 ms) with no loss. Windows' own `ping` showed the same, so that's the network, not the app: the encoder's multicast video floods an unmanaged switch. NAV and other AV-over-IP gear needs a managed switch with IGMP snooping.
