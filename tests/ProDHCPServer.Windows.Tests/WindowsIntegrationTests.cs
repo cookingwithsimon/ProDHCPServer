@@ -139,6 +139,59 @@ public class WindowsIntegrationTests(Xunit.Abstractions.ITestOutputHelper output
     }
 
     [AdminFact]
+    public async Task Server_socket_receives_a_broadcast_discover()
+    {
+        // Real clients have no IP and send DISCOVER to 255.255.255.255. Check a socket bound to the
+        // server's own address still gets limited broadcasts (Windows loops them back locally).
+        var (primary, address) = PrimaryAdapter();
+        var prefix = Math.Max(address.PrefixLength, 16);
+        var bcast = IPv4.ToUInt32(IPv4.BroadcastAddress(address.Address, prefix));
+        var config = new DhcpServerConfig
+        {
+            ServerIp = address.Address,
+            PrefixLength = prefix,
+            PoolStart = IPv4.FromUInt32(bcast - 20),
+            PoolEnd = IPv4.FromUInt32(bcast - 10),
+        };
+        var engine = new DhcpServerEngine(config);
+        var received = new TaskCompletionSource<DhcpEngineEvent>(TaskCreationOptions.RunContinuationsAsynchronously);
+        engine.EventRaised += e =>
+        {
+            if (e.Kind == DhcpEventKind.Received && e.MessageType == DhcpMessageType.Discover) received.TrySetResult(e);
+        };
+        var problems = new List<string>();
+
+        await using var server = new DhcpSocketServer(engine, primary.Index);
+        server.Problem += p => { lock (problems) problems.Add(p.Message); };
+        try
+        {
+            server.Start();
+        }
+        catch (TransportBindException ex) when (ex.Message.Contains("in use"))
+        {
+            output.WriteLine($"NOT RUN: {ex.Message}");
+            return;
+        }
+
+        using var client = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp) { EnableBroadcast = true };
+        client.SetSocketOption(SocketOptionLevel.IP, (SocketOptionName)31, IPAddress.HostToNetworkOrder(primary.Index));
+        client.Bind(new IPEndPoint(address.Address, 0));
+        var discover = new DhcpPacket { TransactionId = 0xB0CA57, Flags = 0x8000 };
+        MacAddress.Parse("02:00:5E:AA:BB:CD").ToBytes().CopyTo(discover.ClientHardwareAddress, 0);
+        discover.Options.Add(DhcpOption.FromByte(DhcpOptionCode.MessageType, (byte)DhcpMessageType.Discover));
+        var bytes = discover.Serialize();
+        for (int i = 0; i < 3 && !received.Task.IsCompleted; i++)
+        {
+            client.SendTo(bytes, new IPEndPoint(IPAddress.Broadcast, DhcpPorts.Server));
+            await Task.WhenAny(received.Task, Task.Delay(1000));
+        }
+
+        lock (problems) foreach (var p in problems) output.WriteLine($"Problem: {p}");
+        Assert.True(received.Task.IsCompleted, "The server socket never received the broadcast DISCOVER.");
+        output.WriteLine($"Broadcast DISCOVER received on {primary.Name} (index {primary.Index}) {address}.");
+    }
+
+    [AdminFact]
     public void Firewall_rule_can_be_added_and_removed()
     {
         Firewall.Allow();

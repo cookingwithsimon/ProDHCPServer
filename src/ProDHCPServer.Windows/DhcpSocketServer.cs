@@ -26,6 +26,7 @@ public sealed class DhcpSocketServer : IAsyncDisposable
     private CancellationTokenSource? _cts;
     private Task? _loop;
     private Timer? _tick;
+    private readonly HashSet<int> _reportedForeignInterfaces = [];
 
     public DhcpSocketServer(DhcpServerEngine engine, int interfaceIndex)
     {
@@ -111,7 +112,14 @@ public sealed class DhcpSocketServer : IAsyncDisposable
             // itself are looped back internally and may report the loopback interface; those are harmless.)
             bool fromSelf = r.RemoteEndPoint is IPEndPoint { Address: var src } && src.Equals(_bindIp);
             if (r.PacketInformation.Interface != 0 && r.PacketInformation.Interface != _interfaceIndex && !fromSelf)
+            {
+                // Say so once per adapter, so a mismatch can't fail silently.
+                if (_reportedForeignInterfaces.Add(r.PacketInformation.Interface))
+                    Problem?.Invoke(new TransportProblem(
+                        $"Ignored DHCP traffic from {r.RemoteEndPoint} because it arrived on another adapter (interface {r.PacketInformation.Interface}, serving on {_interfaceIndex}).",
+                        Convert.ToHexString(buffer, 0, Math.Min(r.ReceivedBytes, 300))));
                 continue;
+            }
 
             DhcpPacket request;
             try
