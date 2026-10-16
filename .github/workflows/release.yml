@@ -1,0 +1,84 @@
+name: Release
+
+# Push a tag like v1.0.0 to build the exe and create a draft GitHub Release with it.
+# The draft stays private until someone presses Publish on the Releases page.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write # create the draft release and upload its files
+
+jobs:
+  release:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Read version from tag
+        id: version
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"
+          if ($tag -notmatch '^v(\d+\.\d+\.\d+)$') { throw "Tag '$tag' must look like v1.2.3" }
+          "version=$($Matches[1])" >> $env:GITHUB_OUTPUT
+          if (-not (Test-Path ".github/release-notes/$tag.md")) { throw "Add .github/release-notes/$tag.md before tagging" }
+
+      - name: Restore
+        run: dotnet restore ProDHCPServer.sln
+
+      - name: Build
+        run: dotnet build ProDHCPServer.sln -c Debug --no-restore
+
+      - name: Core tests
+        run: dotnet test tests/ProDHCPServer.Core.Tests --no-build
+
+      - name: Windows integration tests (no adapter changes)
+        run: dotnet test tests/ProDHCPServer.Windows.Tests --no-build
+
+      - name: Publish single-file exe
+        run: dotnet publish src/ProDHCPServer.App -c Release -r win-x64 -p:Version=${{ steps.version.outputs.version }} -o publish
+
+      - name: Smoke test (launch in light and dark, close)
+        shell: pwsh
+        run: tools/smoke-test.ps1 -Exe publish/ProDHCPServer.exe -OutDir screenshots
+
+      - name: Name the exe and write its SHA-256 checksum
+        shell: pwsh
+        run: |
+          $name = "ProDHCPServer-${{ github.ref_name }}-win-x64.exe"
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          Copy-Item publish/ProDHCPServer.exe "dist/$name"
+          $hash = (Get-FileHash "dist/$name" -Algorithm SHA256).Hash.ToLowerInvariant()
+          # Same format as sha256sum, so `sha256sum -c` works too.
+          Set-Content -NoNewline -Encoding ascii "dist/$name.sha256" "$hash  $name`n"
+          Get-ChildItem dist
+
+      - name: Create or update the draft release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = "${{ github.ref_name }}"
+          $files = (Get-ChildItem dist).FullName
+          gh release view $tag *> $null
+          if ($LASTEXITCODE -eq 0) {
+            gh release upload $tag @files --clobber
+          } else {
+            gh release create $tag @files --draft --verify-tag --title "ProDHCPServer $tag" --notes-file ".github/release-notes/$tag.md"
+          }
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: release-${{ github.ref_name }}
+          path: |
+            dist/
+            screenshots/
+          if-no-files-found: ignore
