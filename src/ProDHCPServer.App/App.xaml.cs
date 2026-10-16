@@ -27,7 +27,8 @@ public partial class App : Application
         base.OnStartup(e);
         var userFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ProDHCPServer");
         var settingsStore = new SettingsStore(Path.Combine(userFolder, "settings.json"));
-        Theme.Apply(settingsStore.Load().Theme);
+        var startSettings = settingsStore.Load();
+        Theme.Apply(startSettings.Theme, startSettings.Look);
 
         if (!Elevation.IsAdministrator())
         {

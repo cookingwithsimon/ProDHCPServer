@@ -7,6 +7,7 @@ using CommunityToolkit.Mvvm.Input;
 using ProDHCPServer.Core.Dhcp;
 using ProDHCPServer.Core.Net;
 using ProDHCPServer.Core.Profiles;
+using LookInfo = ProDHCPServer.App.Theme.Look;
 
 namespace ProDHCPServer.App.ViewModels;
 
@@ -51,10 +52,11 @@ public sealed partial class SettingsViewModel : ObservableObject
     private ISettingsDialogs? _dialogs;
     private bool _loading;
 
-    public SettingsViewModel(ProfileLibrary library, string? activeProfile, string theme)
+    public SettingsViewModel(ProfileLibrary library, string? activeProfile, string theme, LookInfo look)
     {
         _library = library;
         _theme = theme;
+        _look = look;
         ReloadList();
         var active = _library.Find(activeProfile) ?? ProfilePresets.Default;
         _selectedProfile = Profiles.First(p => p.Name == active.Name);
@@ -68,6 +70,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         Enumerable.Range(8, 23).Reverse().Select(p => new PrefixOption(p)).ToList();
 
     public static IReadOnlyList<string> Themes { get; } = ["System", "Dark", "Light"];
+    public static IReadOnlyList<LookInfo> Looks => global::ProDHCPServer.App.Theme.Looks;
     public static IReadOnlyList<CustomOptionFormat> Formats { get; } = Enum.GetValues<CustomOptionFormat>();
 
     public ObservableCollection<ProfileItem> Profiles { get; } = [];
@@ -79,6 +82,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     /// <summary>Raised when a different profile is picked, or the active one is saved or renamed.</summary>
     public event Action<Profile>? ActiveProfileChanged;
     public event Action<string>? ThemeChanged;
+    public event Action<LookInfo>? LookChanged;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsPreset), nameof(CanEdit), nameof(CanDelete))]
@@ -111,6 +115,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     [ObservableProperty] private string _option43 = "";
     [ObservableProperty] private bool _alwaysBroadcast;
     [ObservableProperty] private string _theme;
+    [ObservableProperty] private LookInfo _look;
     [ObservableProperty] private string _errors = "";
     /// <summary>A one-off message after import/export/delete.</summary>
     [ObservableProperty] private string _notice = "";
@@ -134,6 +139,8 @@ public sealed partial class SettingsViewModel : ObservableObject
     }
 
     partial void OnThemeChanged(string value) => ThemeChanged?.Invoke(value);
+
+    partial void OnLookChanged(LookInfo value) => LookChanged?.Invoke(value);
 
     partial void OnSelectedProfileChanged(ProfileItem? oldValue, ProfileItem newValue)
     {

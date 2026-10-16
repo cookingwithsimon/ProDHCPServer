@@ -12,7 +12,7 @@
         Title="ProDHCPServer" Width="1320" Height="860" MinWidth="900" MinHeight="600"
         WindowStartupLocation="CenterScreen"
         Background="{DynamicResource WindowBg}"
-        FontFamily="{StaticResource TextFont}"
+        FontFamily="{DynamicResource TextFont}"
         Closing="OnClosing"
         SourceInitialized="OnSourceInitialized">
     <Window.InputBindings>
@@ -125,7 +125,8 @@
             </Grid>
 
             <!-- ===== Status field: one line, readable from across the rack, beside a giant status light ===== -->
-            <Border Grid.Row="1" Margin="0,0,0,16" ClipToBounds="True" MinHeight="104"
+            <Border Grid.Row="1" Margin="0,0,0,16" ClipToBounds="True" MinHeight="104" CornerRadius="{DynamicResource PanelRadius}"
+                    BorderBrush="{DynamicResource PanelBorder}" BorderThickness="{DynamicResource PanelBorderThickness}"
                     Background="{Binding HeadlineState, Converter={StaticResource StateBrush}, ConverterParameter=Soft}">
                 <Grid>
                     <!-- The light: cropped by the right edge of the field. Its colour is the state. -->
@@ -136,7 +137,7 @@
                                HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,70,0"
                                AutomationProperties.Name="{Binding HeadlineState, Converter={StaticResource StateWord}}" />
                     <StackPanel VerticalAlignment="Center" Margin="32,16,232,16">
-                        <TextBlock Text="{Binding HeadlineText}" FontFamily="{StaticResource DisplayFont}" FontSize="{StaticResource TextHead}" FontWeight="Bold"
+                        <TextBlock Text="{Binding HeadlineText}" FontFamily="{DynamicResource DisplayFont}" FontSize="{StaticResource TextHead}" FontWeight="Bold"
                                    LineHeight="44" LineStackingStrategy="BlockLineHeight" Style="{StaticResource Primary}"
                                    AutomationProperties.LiveSetting="Assertive" />
                         <TextBlock Text="{Binding HeadlineAction}" FontSize="{StaticResource TextBody}" Margin="0,8,0,0" Style="{StaticResource Primary}"
@@ -309,7 +310,7 @@
                                 <TextBlock Text="{Binding Vendor}" FontSize="{StaticResource TextBody}" Style="{StaticResource Secondary}" />
                                 <Grid Margin="0,16,0,0">
                                     <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                                    <TextBlock Text="{Binding Ip}" FontFamily="{StaticResource DisplayFont}" FontSize="{StaticResource TextDisplay}" FontWeight="Bold"
+                                    <TextBlock Text="{Binding Ip}" FontFamily="{DynamicResource DisplayFont}" FontSize="{StaticResource TextDisplay}" FontWeight="Bold"
                                                Style="{StaticResource Primary}" TextWrapping="NoWrap" VerticalAlignment="Center" AutomationProperties.Name="Device IP address" />
                                     <Button Grid.Column="1" Style="{StaticResource IconButton}" Content="&#xE8C8;" Margin="16,0,0,8" VerticalAlignment="Center"
                                             ToolTip="Copy IP address" AutomationProperties.Name="Copy IP address"
@@ -444,7 +445,7 @@
                                 <ItemsControl ItemsSource="{Binding Found}" AutomationProperties.Name="Found on the network">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate DataType="{x:Type vm:FoundDeviceViewModel}">
-                                            <Border Margin="0,0,0,4" Padding="16,12" Background="{DynamicResource RaisedBg}" ToolTip="{Binding Detail}">
+                                            <Border Margin="0,0,0,4" Padding="16,12" Background="{DynamicResource RaisedBg}" CornerRadius="{DynamicResource RowRadius}" ToolTip="{Binding Detail}">
                                                 <Grid>
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" />
@@ -567,7 +568,7 @@
                 <DockPanel DataContext="{Binding Settings}">
                     <!-- Header -->
                     <Grid DockPanel.Dock="Top" Margin="32,24,24,0">
-                        <TextBlock Text="Profiles" FontFamily="{StaticResource DisplayFont}" FontSize="{StaticResource TextHead}" FontWeight="Bold"
+                        <TextBlock Text="Profiles" FontFamily="{DynamicResource DisplayFont}" FontSize="{StaticResource TextHead}" FontWeight="Bold"
                                    Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center" />
                         <Button x:Name="CloseSettingsButton" Style="{StaticResource IconButton}" Content="&#xE711;" HorizontalAlignment="Right"
                                 Command="{Binding DataContext.CloseSettingsCommand, RelativeSource={RelativeSource AncestorType=Window}}"
@@ -737,9 +738,15 @@
                                            AutomationProperties.LiveSetting="Polite" />
                             </Border>
 
-                            <Label Content="T_heme" Target="{Binding ElementName=ThemeBox}" Style="{StaticResource FieldLabel}" Margin="0,32,0,8" />
+                            <!-- Appearance: which look, then dark or light. Both apply straight away and are remembered. -->
+                            <Label Content="Loo_k" Target="{Binding ElementName=LookBox}" Style="{StaticResource FieldLabel}" Margin="0,32,0,8" />
+                            <ComboBox x:Name="LookBox" ItemsSource="{x:Static vm:SettingsViewModel.Looks}" SelectedItem="{Binding Look}" DisplayMemberPath="Name"
+                                      FontSize="{StaticResource TextBody}" HorizontalAlignment="Stretch" />
+                            <TextBlock Text="{Binding Look.Blurb}" Style="{StaticResource FieldHelp}" />
+
+                            <Label Content="Dark or l_ight" Target="{Binding ElementName=ThemeBox}" Style="{StaticResource FieldLabel}" />
                             <ComboBox x:Name="ThemeBox" ItemsSource="{x:Static vm:SettingsViewModel.Themes}" SelectedItem="{Binding Theme}" FontSize="{StaticResource TextBody}" HorizontalAlignment="Stretch" />
-                            <TextBlock Text="Applies straight away, for every profile." Style="{StaticResource FieldHelp}" />
+                            <TextBlock Text="System follows Windows. Both apply straight away, for every profile." Style="{StaticResource FieldHelp}" />
                         </StackPanel>
                     </ScrollViewer>
                 </DockPanel>
