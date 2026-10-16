@@ -16,9 +16,11 @@ public sealed class ElevationWindow : Window
         ResizeMode = ResizeMode.NoResize;
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
         SetResourceReference(BackgroundProperty, "WindowBg");
+        SetResourceReference(FontFamilyProperty, "TextFont");
 
-        var heading = new TextBlock { Text = "Administrator rights needed", FontSize = 24, FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 0, 0, 16) };
+        var heading = new TextBlock { Text = "Administrator rights needed", FontSize = 40, FontWeight = FontWeights.Bold, LineHeight = 44, LineStackingStrategy = LineStackingStrategy.BlockLineHeight, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 16) };
         heading.SetResourceReference(TextBlock.ForegroundProperty, "TextPrimary");
+        heading.SetResourceReference(TextBlock.FontFamilyProperty, "DisplayFont");
         var body = new TextBlock
         {
             TextWrapping = TextWrapping.Wrap,
@@ -31,15 +33,16 @@ public sealed class ElevationWindow : Window
         };
         body.SetResourceReference(TextBlock.ForegroundProperty, "TextSecondary");
 
-        var cont = new Button { Content = "Restart as administrator", MinWidth = 120, Padding = new Thickness(16, 8, 16, 8), IsDefault = true, Margin = new Thickness(0, 0, 8, 0) };
+        var cont = new Button { Content = "Restart as administrator", MinWidth = 120, MinHeight = 48, IsDefault = true, Margin = new Thickness(0, 0, 8, 0) };
         cont.SetResourceReference(StyleProperty, "AccentButton");
         cont.Click += (_, _) => { Relaunch = true; Close(); };
-        var quit = new Button { Content = "Quit ProDHCPServer", MinWidth = 100, Padding = new Thickness(16, 8, 16, 8), IsCancel = true };
+        var quit = new Button { Content = "Quit ProDHCPServer", MinWidth = 100, MinHeight = 48, IsCancel = true };
+        quit.SetResourceReference(StyleProperty, "SecondaryButton");
         quit.Click += (_, _) => Close();
 
         Content = new StackPanel
         {
-            Margin = new Thickness(24),
+            Margin = new Thickness(32),
             Children =
             {
                 heading,

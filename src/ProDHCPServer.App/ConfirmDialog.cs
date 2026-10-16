@@ -19,24 +19,25 @@ public sealed class ConfirmDialog : Window
         ResizeMode = ResizeMode.NoResize;
         ShowInTaskbar = false;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
-        SetResourceReference(BackgroundProperty, "OverlayBg");
+        SetResourceReference(BackgroundProperty, "PanelBg");
+        SetResourceReference(FontFamilyProperty, "TextFont");
 
         var heading = new TextBlock { Text = title, FontSize = 20, FontWeight = FontWeights.SemiBold, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 8) };
         heading.SetResourceReference(TextBlock.ForegroundProperty, "TextPrimary");
         var body = new TextBlock { Text = message, FontSize = 16, TextWrapping = TextWrapping.Wrap };
         body.SetResourceReference(TextBlock.ForegroundProperty, "TextSecondary");
 
-        var confirm = new Button { Content = confirmText, MinWidth = 120, Padding = new Thickness(16, 8, 16, 8), Margin = new Thickness(0, 0, 8, 0), FontWeight = FontWeights.Medium };
-        confirm.SetResourceReference(BackgroundProperty, "BadBrush");
-        confirm.Foreground = System.Windows.Media.Brushes.White;
+        var confirm = new Button { Content = confirmText, MinWidth = 120, MinHeight = 48, Margin = new Thickness(0, 0, 8, 0) };
+        confirm.SetResourceReference(StyleProperty, "DangerButton");
         confirm.Click += (_, _) => { _confirmed = true; Close(); };
-        var cancel = new Button { Content = "Cancel", MinWidth = 100, Padding = new Thickness(16, 8, 16, 8), IsDefault = true, IsCancel = true, FontWeight = FontWeights.Medium };
+        var cancel = new Button { Content = "Cancel", MinWidth = 100, MinHeight = 48, IsDefault = true, IsCancel = true };
+        cancel.SetResourceReference(StyleProperty, "SecondaryButton");
         cancel.Click += (_, _) => Close();
         Loaded += (_, _) => cancel.Focus();
 
         Content = new StackPanel
         {
-            Margin = new Thickness(24),
+            Margin = new Thickness(32),
             Children =
             {
                 heading,
