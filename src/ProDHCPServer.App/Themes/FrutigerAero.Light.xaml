@@ -1,0 +1,64 @@
+<!--
+    Frutiger Aero, light: frosted glass panels over a sky-to-grass backdrop, glossy buttons, 2000s optimism.
+    Every key here is read by the XAML with DynamicResource, so the set must stay complete: copy this file to make a new
+    look and change the values, not the keys. Brushes may be solid or gradients.
+-->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+
+  <!-- Surfaces: one ground, a panel a tone step up, a raised step for the slide-over and selected rows. -->
+  <LinearGradientBrush x:Key="WindowBg" StartPoint="0,0" EndPoint="0,1">
+    <GradientStop Color="#D6EEFB" Offset="0" />
+    <GradientStop Color="#7FC4EF" Offset="0.45" />
+    <GradientStop Color="#5FB2E6" Offset="0.7" />
+    <GradientStop Color="#9DD36A" Offset="1" />
+  </LinearGradientBrush>
+  <SolidColorBrush x:Key="PanelBg" Color="#C2FFFFFF" />
+  <SolidColorBrush x:Key="RaisedBg" Color="#E8FFFFFF" />
+  <SolidColorBrush x:Key="RowHover" Color="#F7FFFFFF" />
+  <SolidColorBrush x:Key="Scrim" Color="#66143C5C" />
+
+  <!-- Ink -->
+  <SolidColorBrush x:Key="TextPrimary" Color="#0C2B47" />
+  <SolidColorBrush x:Key="TextSecondary" Color="#2E5676" />
+  <SolidColorBrush x:Key="TextMuted" Color="#4E7390" />
+
+  <!-- Status colours, tuned for readability at arm's length. The Soft ones fill banners and the status field. -->
+  <SolidColorBrush x:Key="GoodBrush" Color="#3FA92A" />
+  <SolidColorBrush x:Key="WarnBrush" Color="#E39A12" />
+  <SolidColorBrush x:Key="BadBrush" Color="#D9382C" />
+  <SolidColorBrush x:Key="IdleBrush" Color="#8DB4CF" />
+  <SolidColorBrush x:Key="GoodSoft" Color="#E0E6F8DC" />
+  <SolidColorBrush x:Key="WarnSoft" Color="#E0FFF0C8" />
+  <SolidColorBrush x:Key="BadSoft" Color="#E0FBDADA" />
+  <SolidColorBrush x:Key="IdleSoft" Color="#C2FFFFFF" />
+
+  <!-- The primary action and the box for raw technical detail -->
+  <LinearGradientBrush x:Key="AccentBrush" StartPoint="0,0" EndPoint="0,1">
+    <GradientStop Color="#6CC4F8" Offset="0" />
+    <GradientStop Color="#2E93E0" Offset="0.5" />
+    <GradientStop Color="#1E7FD3" Offset="1" />
+  </LinearGradientBrush>
+  <SolidColorBrush x:Key="AccentText" Color="#FFFFFF" />
+  <SolidColorBrush x:Key="MonoBg" Color="#D9F3F9FE" />
+
+  <!-- Shape: panel edges and corners, button edges, a gloss painted over every button, and how round buttons are (0.5 = pill, 0 = square). -->
+  <SolidColorBrush x:Key="PanelBorder" Color="#DDFFFFFF" />
+  <Thickness x:Key="PanelBorderThickness">1</Thickness>
+  <CornerRadius x:Key="PanelRadius">14</CornerRadius>
+  <CornerRadius x:Key="RowRadius">8</CornerRadius>
+  <SolidColorBrush x:Key="ButtonBorder" Color="#A0FFFFFF" />
+  <Thickness x:Key="ButtonBorderThickness">1</Thickness>
+  <LinearGradientBrush x:Key="ButtonGloss" StartPoint="0,0" EndPoint="0,1">
+    <GradientStop Color="#A6FFFFFF" Offset="0" />
+    <GradientStop Color="#33FFFFFF" Offset="0.5" />
+    <GradientStop Color="#00FFFFFF" Offset="0.5" />
+  </LinearGradientBrush>
+  <sys:Double x:Key="ButtonCornerScale">0.5</sys:Double>
+
+  <!-- Faces: TextFont for everything you read, DisplayFont for the few big things (status line, device IP, settings title). -->
+  <FontFamily x:Key="TextFont">Segoe UI</FontFamily>
+  <FontFamily x:Key="DisplayFont">Segoe UI</FontFamily>
+  <FontFamily x:Key="ContentControlThemeFontFamily">Segoe UI</FontFamily>
+</ResourceDictionary>

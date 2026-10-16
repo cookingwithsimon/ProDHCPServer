@@ -45,7 +45,7 @@ public sealed partial class MainViewModel : ObservableObject, IAsyncDisposable
         _settings = settingsStore.Load();
         _monitor = new DeviceMonitor(log);
         if (profiles.Load(_settings) is { } profileProblem) log.Add(LogSeverity.Warning, LogCategory.App, profileProblem);
-        Settings = new SettingsViewModel(profiles, _settings.ActiveProfile, _settings.Theme);
+        Settings = new SettingsViewModel(profiles, _settings.ActiveProfile, _settings.Theme, Theme.Find(_settings.Look));
         Settings.ActiveProfileChanged += profile =>
         {
             if (_settings.ActiveProfile != profile.Name)
@@ -58,6 +58,12 @@ public sealed partial class MainViewModel : ObservableObject, IAsyncDisposable
         Settings.ThemeChanged += theme =>
         {
             _settings = _settings with { Theme = theme };
+            SaveSettings();
+            ApplyTheme();
+        };
+        Settings.LookChanged += look =>
+        {
+            _settings = _settings with { Look = look.Id };
             SaveSettings();
             ApplyTheme();
         };
@@ -806,7 +812,7 @@ public sealed partial class MainViewModel : ObservableObject, IAsyncDisposable
 
     public void ApplyTheme()
     {
-        Theme.Apply(_settings.Theme);
+        Theme.Apply(_settings.Theme, _settings.Look);
         foreach (var s in Steps) s.Repaint();
         OnPropertyChanged(nameof(HeadlineState));
     }

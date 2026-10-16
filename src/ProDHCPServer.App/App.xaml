@@ -12,12 +12,10 @@
         <local:VisibleWhenConverter x:Key="VisibleWhen" />
 
         <!--
-            Faces: Figtree for everything you read, League Spartan only for the few big things (status line, device IP).
-            Both are embedded so every laptop shows the same thing. Monospace is kept for raw technical detail only.
+            Colours, text and display faces, and shapes (corners, edges, gloss) come from the current look: a resource
+            dictionary under Themes/ that Theme.Apply merges in, so they are always read with DynamicResource.
+            Monospace is kept for raw technical detail only and is the same in every look.
         -->
-        <FontFamily x:Key="TextFont">pack://application:,,,/Assets/Fonts/#Figtree</FontFamily>
-        <FontFamily x:Key="DisplayFont">pack://application:,,,/Assets/Fonts/#League Spartan</FontFamily>
-        <FontFamily x:Key="ContentControlThemeFontFamily">pack://application:,,,/Assets/Fonts/#Figtree</FontFamily>
         <FontFamily x:Key="MonoFont">Cascadia Mono, Consolas, Courier New</FontFamily>
         <FontFamily x:Key="IconFont">Segoe Fluent Icons, Segoe MDL2 Assets</FontFamily>
 
@@ -28,14 +26,20 @@
         <sys:Double x:Key="TextHead">40</sys:Double>
         <sys:Double x:Key="TextDisplay">64</sys:Double>
 
-        <!-- Panels are a tone step above the ground: no border, no shadow, square corners. -->
+        <!-- Panels are a tone step above the ground. The look decides whether they also get an edge or rounded corners. -->
         <Style x:Key="Panel" TargetType="Border">
             <Setter Property="Background" Value="{DynamicResource PanelBg}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource PanelBorder}" />
+            <Setter Property="BorderThickness" Value="{DynamicResource PanelBorderThickness}" />
+            <Setter Property="CornerRadius" Value="{DynamicResource PanelRadius}" />
             <Setter Property="Padding" Value="24" />
         </Style>
 
         <!-- Status banners: a whole field of the state's soft colour. -->
         <Style x:Key="Banner" TargetType="Border">
+            <Setter Property="BorderBrush" Value="{DynamicResource PanelBorder}" />
+            <Setter Property="BorderThickness" Value="{DynamicResource PanelBorderThickness}" />
+            <Setter Property="CornerRadius" Value="{DynamicResource PanelRadius}" />
             <Setter Property="Padding" Value="24,16" />
             <Setter Property="Margin" Value="0,0,0,16" />
         </Style>
@@ -75,13 +79,14 @@
         </Style>
 
         <!--
-            Buttons: flat, one fill, fully round (the status LED's circle is the app's one shape). Hover and press tint the
-            fill with its own text colour; keyboard focus draws a ring in the ink colour outside the button.
+            Buttons: one fill, with an edge and a gloss the look paints over it (both transparent in the default look) and
+            corners the look sets from fully round to nearly square. Hover and press tint the fill with its own text colour;
+            keyboard focus draws a ring in the ink colour outside the button.
         -->
         <Style x:Key="PillButton" TargetType="Button">
             <Setter Property="Background" Value="{DynamicResource RaisedBg}" />
             <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
-            <Setter Property="FontFamily" Value="{StaticResource TextFont}" />
+            <Setter Property="FontFamily" Value="{DynamicResource TextFont}" />
             <Setter Property="FontSize" Value="{StaticResource TextBody}" />
             <Setter Property="FontWeight" Value="Medium" />
             <Setter Property="Padding" Value="20,0" />
@@ -94,9 +99,16 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
                         <Grid>
-                            <Border x:Name="Ring" Margin="-4" CornerRadius="{Binding ActualHeight, RelativeSource={RelativeSource Self}, Converter={x:Static local:PillRadiusConverter.Instance}}" BorderThickness="2" BorderBrush="Transparent" />
-                            <Border x:Name="Bg" CornerRadius="{Binding ActualHeight, RelativeSource={RelativeSource Self}, Converter={x:Static local:PillRadiusConverter.Instance}}" Background="{TemplateBinding Background}" />
-                            <Border x:Name="Tint" CornerRadius="{Binding ActualHeight, RelativeSource={RelativeSource Self}, Converter={x:Static local:PillRadiusConverter.Instance}}" Background="{TemplateBinding Foreground}" Opacity="0" />
+                            <!-- Each layer's corner radius is its own height times the look's ButtonCornerScale (carried in Tag so it follows a live look change). -->
+                            <Border x:Name="Ring" Margin="-4" BorderThickness="2" BorderBrush="Transparent" Tag="{DynamicResource ButtonCornerScale}"
+                                    CornerRadius="{local:CornerScale}" />
+                            <Border x:Name="Bg" Background="{TemplateBinding Background}" Tag="{DynamicResource ButtonCornerScale}"
+                                    BorderBrush="{DynamicResource ButtonBorder}" BorderThickness="{DynamicResource ButtonBorderThickness}"
+                                    CornerRadius="{local:CornerScale}" />
+                            <Border x:Name="Gloss" Background="{DynamicResource ButtonGloss}" IsHitTestVisible="False" Tag="{DynamicResource ButtonCornerScale}"
+                                    CornerRadius="{local:CornerScale}" />
+                            <Border x:Name="Tint" Background="{TemplateBinding Foreground}" Opacity="0" Tag="{DynamicResource ButtonCornerScale}"
+                                    CornerRadius="{local:CornerScale}" />
                             <ContentPresenter Margin="{TemplateBinding Padding}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="Center"
                                               TextElement.Foreground="{TemplateBinding Foreground}" RecognizesAccessKey="True" />
                         </Grid>
@@ -156,7 +168,7 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
                         <Border x:Name="Bg" Background="{TemplateBinding Background}" BorderBrush="Transparent" BorderThickness="2"
-                                Padding="{TemplateBinding Padding}">
+                                CornerRadius="{DynamicResource RowRadius}" Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" />
                         </Border>
                         <ControlTemplate.Triggers>

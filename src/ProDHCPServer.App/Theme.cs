@@ -1,46 +1,44 @@
 using System.Windows;
-using System.Windows.Media;
 using Microsoft.Win32;
 
 namespace ProDHCPServer.App;
 
 /// <summary>
-/// The app's own colour tokens, swapped together with WPF's Fluent ThemeMode so custom panels and
-/// standard controls always match. Status colours are tuned for readability at arm's length.
+/// Picks the app's look (a pair of resource dictionaries under Themes/) and swaps it together with WPF's Fluent
+/// ThemeMode so custom panels and standard controls always match. Every colour, font and shape the XAML reads with
+/// DynamicResource comes from the current look, so switching looks repaints the window live.
+///
+/// To add a look: drop Themes/Name.Dark.xaml and Themes/Name.Light.xaml next to the others (copy Faceplate's and
+/// change the values; every key in it must be present) and add one line to <see cref="Looks"/>.
 /// </summary>
 public static class Theme
 {
-    private static readonly Dictionary<string, (string Dark, string Light)> Tokens = new()
+    /// <summary>One selectable look. <paramref name="Id"/> is the file name prefix and what settings.json stores.</summary>
+    public sealed record Look(string Id, string Name, string Blurb)
     {
-        // A rack faceplate: one ground, a surface one tone step up, a raised step for the slide-over and selected rows.
-        // Surfaces are separated by tone, never by lines or shadows.
-        ["WindowBg"] = ("#0B0D10", "#E6E8EB"),
-        ["PanelBg"] = ("#15181C", "#F4F5F7"),
-        ["RaisedBg"] = ("#1E2227", "#FFFFFF"),
-        ["RowHover"] = ("#252A30", "#EBEDF0"),
-        ["Scrim"] = ("#A6000000", "#66000000"),
-        ["TextPrimary"] = ("#F2F4F6", "#0E1114"),
-        ["TextSecondary"] = ("#B3BAC3", "#474F59"),
-        ["TextMuted"] = ("#8A929C", "#5D6570"),
-        // Status LED colours, tuned for readability at arm's length. These are the only hues in the app.
-        ["GoodBrush"] = ("#3DD068", "#1A7F37"),
-        ["WarnBrush"] = ("#F2A928", "#B26B00"),
-        ["BadBrush"] = ("#FF5A52", "#CF222E"),
-        ["IdleBrush"] = ("#4A515A", "#A3AAB3"),
-        ["GoodSoft"] = ("#10291A", "#D9F2E0"),
-        ["WarnSoft"] = ("#2E2309", "#FBEACB"),
-        ["BadSoft"] = ("#361515", "#F9DADC"),
-        ["IdleSoft"] = ("#15181C", "#F4F5F7"),
-        // The action colour is the ink itself: primary buttons are solid ink with ground-coloured text.
-        ["AccentBrush"] = ("#F2F4F6", "#0E1114"),
-        ["AccentText"] = ("#0B0D10", "#FFFFFF"),
-        ["MonoBg"] = ("#0B0D10", "#ECEEF1"),
-    };
+        public override string ToString() => Name;
+    }
+
+    public static IReadOnlyList<Look> Looks { get; } =
+    [
+        new("Faceplate", "Rack faceplate", "The default: flat, dark, one status light at every scale."),
+        new("FrutigerAero", "Frutiger Aero", "Glossy glass panels over a sky-and-grass backdrop, 2000s style."),
+        new("MetalHeart", "Metal Heart", "Brushed steel, bevelled edges and a chrome-red accent."),
+    ];
+
+    public static Look DefaultLook => Looks[0];
 
     public static bool IsDark { get; private set; }
 
-    /// <summary>Applies "System", "Dark" or "Light".</summary>
-    public static void Apply(string mode)
+    public static Look CurrentLook { get; private set; } = DefaultLook;
+
+    private static ResourceDictionary? _current;
+
+    /// <summary>Finds a look by its id, falling back to the default for unknown or old values in settings.json.</summary>
+    public static Look Find(string? id) => Looks.FirstOrDefault(l => l.Id == id) ?? DefaultLook;
+
+    /// <summary>Applies a light-or-dark mode ("System", "Dark" or "Light") and a look id.</summary>
+    public static void Apply(string mode, string? lookId)
     {
         bool dark = mode switch
         {
@@ -48,15 +46,20 @@ public static class Theme
             "Light" => false,
             _ => SystemPrefersDark(),
         };
+        var look = Find(lookId);
         IsDark = dark;
+        CurrentLook = look;
         var app = Application.Current;
         app.ThemeMode = dark ? ThemeMode.Dark : ThemeMode.Light;
-        foreach (var (key, (d, l)) in Tokens)
+        var next = new ResourceDictionary
         {
-            var brush = new SolidColorBrush((Color)ColorConverter.ConvertFromString(dark ? d : l));
-            brush.Freeze();
-            app.Resources[key] = brush;
-        }
+            Source = new Uri($"pack://application:,,,/Themes/{look.Id}.{(dark ? "Dark" : "Light")}.xaml"),
+        };
+        // The look goes last so its keys win over Fluent's own dictionaries (added by ThemeMode), e.g. the control font.
+        var merged = app.Resources.MergedDictionaries;
+        if (_current is not null) merged.Remove(_current);
+        merged.Add(next);
+        _current = next;
     }
 
     private static bool SystemPrefersDark()

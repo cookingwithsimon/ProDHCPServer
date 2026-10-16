@@ -1,4 +1,4 @@
-# Launches the published exe in each theme, checks it stays up, and saves a screenshot.
+# Launches the published exe in each look (dark and light), checks it stays up, and saves a screenshot.
 # Runs on the CI runner, which is already elevated, so no UAC prompt appears.
 param(
     [Parameter(Mandatory)] [string] $Exe,
@@ -19,15 +19,21 @@ function Save-Screen([string] $path) {
     $g.Dispose(); $bmp.Dispose()
 }
 
-# Each shot: theme, file name, extra arguments. The last one opens the settings slide-over.
+# Each shot: dark or light, look, file name, extra arguments. "--open-settings" opens the settings slide-over.
+# The first three keep their names: README screenshots are taken from them.
 $shots = @(
-    @{ Theme = "Dark"; Name = "main-dark"; Args = @() },
-    @{ Theme = "Light"; Name = "main-light"; Args = @() },
-    @{ Theme = "Dark"; Name = "settings-dark"; Args = @("--open-settings") }
+    @{ Theme = "Dark"; Look = "Faceplate"; Name = "main-dark"; Args = @() },
+    @{ Theme = "Light"; Look = "Faceplate"; Name = "main-light"; Args = @() },
+    @{ Theme = "Dark"; Look = "Faceplate"; Name = "settings-dark"; Args = @("--open-settings") },
+    @{ Theme = "Light"; Look = "FrutigerAero"; Name = "aero-light"; Args = @() },
+    @{ Theme = "Dark"; Look = "FrutigerAero"; Name = "aero-dark"; Args = @() },
+    @{ Theme = "Light"; Look = "FrutigerAero"; Name = "aero-settings-light"; Args = @("--open-settings") },
+    @{ Theme = "Dark"; Look = "MetalHeart"; Name = "metal-dark"; Args = @() },
+    @{ Theme = "Light"; Look = "MetalHeart"; Name = "metal-light"; Args = @() },
+    @{ Theme = "Dark"; Look = "MetalHeart"; Name = "metal-settings-dark"; Args = @("--open-settings") }
 )
 foreach ($shot in $shots) {
-    $theme = $shot.Theme
-    @{ Theme = $theme } | ConvertTo-Json | Set-Content -Path (Join-Path $settingsDir "settings.json") -Encoding utf8
+    @{ Theme = $shot.Theme; Look = $shot.Look } | ConvertTo-Json | Set-Content -Path (Join-Path $settingsDir "settings.json") -Encoding utf8
     if ($shot.Args.Count -gt 0) { $p = Start-Process -FilePath $Exe -ArgumentList $shot.Args -PassThru }
     else { $p = Start-Process -FilePath $Exe -PassThru }
     Start-Sleep -Seconds 15
