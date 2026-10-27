@@ -37,6 +37,24 @@ public sealed class StateBrushConverter : IValueConverter
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotSupportedException();
 }
 
+/// <summary>
+/// IsRunning → the Start/Stop button's Background or Foreground (the ConverterParameter): solid ink to start, a quiet
+/// button to stop, since the status field already says the server is live. Looked up again after a look change.
+/// </summary>
+public sealed class RunningBrushConverter : IValueConverter
+{
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        bool running = value is true;
+        var key = parameter as string == "Foreground"
+            ? (running ? "TextPrimary" : "AccentText")
+            : (running ? "RaisedBg" : "AccentBrush");
+        return Application.Current.TryFindResource(key);
+    }
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotSupportedException();
+}
+
 /// <summary>StepState → a short word for screen readers and the colour-blind.</summary>
 public sealed class StateWordConverter : IValueConverter
 {

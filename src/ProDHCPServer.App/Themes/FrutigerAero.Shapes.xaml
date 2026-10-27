@@ -1,0 +1,75 @@
+<!--
+    Frutiger Aero: the shapes. Glass panels with a hard-edged gloss band across the top (the 2000s desktop-widget
+    look), glossy capsule buttons, orb status lights, and a glass bar behind the top controls. Colours come from the
+    Dark and Light files, which merge this after Shared.xaml.
+-->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+
+  <CornerRadius x:Key="PanelRadius">18</CornerRadius>
+  <CornerRadius x:Key="RowRadius">10</CornerRadius>
+  <Thickness x:Key="PanelBorderThickness">1</Thickness>
+  <Thickness x:Key="SlideOverBorderThickness">1,0,0,0</Thickness>
+  <Thickness x:Key="TopBarPadding">12,8</Thickness>
+
+  <!-- Buttons: fully round, a light edge, and a gloss that stops dead at the middle: the glass look. -->
+  <sys:Double x:Key="ButtonCornerScale">0.5</sys:Double>
+  <Thickness x:Key="ButtonBorderThickness">1</Thickness>
+  <SolidColorBrush x:Key="ButtonBorder" Color="#99FFFFFF" />
+  <LinearGradientBrush x:Key="ButtonGloss" StartPoint="0,0" EndPoint="0,1">
+    <GradientStop Color="#C2FFFFFF" Offset="0" />
+    <GradientStop Color="#4DFFFFFF" Offset="0.5" />
+    <GradientStop Color="#00FFFFFF" Offset="0.5" />
+    <GradientStop Color="#1AFFFFFF" Offset="1" />
+  </LinearGradientBrush>
+
+  <!-- The same gloss band, wider and softer, across the top of every panel. -->
+  <LinearGradientBrush x:Key="PanelGloss" StartPoint="0,0" EndPoint="0,1">
+    <GradientStop Color="#8CFFFFFF" Offset="0" />
+    <GradientStop Color="#33FFFFFF" Offset="0.4" />
+    <GradientStop Color="#00FFFFFF" Offset="0.4" />
+  </LinearGradientBrush>
+
+  <!-- Status lights become orbs: a specular spot up and to the left, a darker rim at the bottom. -->
+  <RadialGradientBrush x:Key="LightGloss" GradientOrigin="0.3,0.25" Center="0.4,0.4" RadiusX="0.6" RadiusY="0.6">
+    <GradientStop Color="#D9FFFFFF" Offset="0" />
+    <GradientStop Color="#40FFFFFF" Offset="0.45" />
+    <GradientStop Color="#00FFFFFF" Offset="0.8" />
+    <GradientStop Color="#33000000" Offset="1" />
+  </RadialGradientBrush>
+
+  <Style x:Key="Panel" TargetType="ContentControl">
+    <Setter Property="Focusable" Value="False" />
+    <Setter Property="IsTabStop" Value="False" />
+    <Setter Property="Padding" Value="24" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="ContentControl">
+          <Grid>
+            <Border Background="{DynamicResource PanelBg}" BorderBrush="{DynamicResource PanelBorder}" BorderThickness="1" CornerRadius="18" />
+            <Border Background="{DynamicResource PanelGloss}" CornerRadius="18" Margin="1" IsHitTestVisible="False" />
+            <ContentPresenter Margin="{TemplateBinding Padding}" />
+          </Grid>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <Style x:Key="StatusField" TargetType="ContentControl">
+    <Setter Property="Focusable" Value="False" />
+    <Setter Property="IsTabStop" Value="False" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="ContentControl">
+          <Grid>
+            <Border Background="{TemplateBinding Background}" BorderBrush="{DynamicResource PanelBorder}" BorderThickness="1" CornerRadius="18" ClipToBounds="True">
+              <ContentPresenter />
+            </Border>
+            <Border Background="{DynamicResource PanelGloss}" CornerRadius="18" Margin="1" IsHitTestVisible="False" />
+          </Grid>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+</ResourceDictionary>

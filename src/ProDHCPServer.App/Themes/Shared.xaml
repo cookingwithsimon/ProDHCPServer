@@ -1,0 +1,242 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime"
+                    xmlns:local="clr-namespace:ProDHCPServer.App">
+  <!--
+      What every look shares: the type scale, text styles, and the default (rack faceplate) shapes for panels, banners
+      and buttons. A look's own files merge this first, then put their colours, fonts and backdrop on top, and may
+      replace any of the shape styles below with their own templates. Everything that can differ between looks is read
+      with DynamicResource so switching looks repaints the window live.
+  -->
+  <FontFamily x:Key="MonoFont">Cascadia Mono, Consolas, Courier New</FontFamily>
+  <FontFamily x:Key="IconFont">Segoe Fluent Icons, Segoe MDL2 Assets</FontFamily>
+
+  <!-- Five sizes: small, body, lead, head, display. Nothing below 13. -->
+  <sys:Double x:Key="TextSmall">13</sys:Double>
+  <sys:Double x:Key="TextBody">16</sys:Double>
+  <sys:Double x:Key="TextLead">20</sys:Double>
+  <sys:Double x:Key="TextHead">40</sys:Double>
+  <sys:Double x:Key="TextDisplay">64</sys:Double>
+
+  <!-- Shape tokens the default templates read. A look can change these, or replace the templates outright. -->
+  <SolidColorBrush x:Key="PanelBorder" Color="Transparent" />
+  <Thickness x:Key="PanelBorderThickness">0</Thickness>
+  <CornerRadius x:Key="PanelRadius">0</CornerRadius>
+  <CornerRadius x:Key="RowRadius">0</CornerRadius>
+  <SolidColorBrush x:Key="ButtonBorder" Color="Transparent" />
+  <Thickness x:Key="ButtonBorderThickness">0</Thickness>
+  <SolidColorBrush x:Key="ButtonGloss" Color="Transparent" />
+  <sys:Double x:Key="ButtonCornerScale">0.5</sys:Double>
+  <!-- Painted over every status light (the big one in the status field and the one on each check); a specular spot in glossy looks. -->
+  <SolidColorBrush x:Key="LightGloss" Color="Transparent" />
+  <!-- The strip behind the adapter/profile pickers and Start: nothing in the faceplate look, a bar in others. -->
+  <SolidColorBrush x:Key="TopBarBg" Color="Transparent" />
+  <Thickness x:Key="TopBarPadding">0</Thickness>
+  <!-- The settings slide-over's edge (its fill, SlideOverBg, is a colour so each look sets it). -->
+  <Thickness x:Key="SlideOverBorderThickness">0</Thickness>
+
+  <!-- Panels are a tone step above the ground. A ContentControl so a look can give it any chrome it likes. -->
+  <Style x:Key="Panel" TargetType="ContentControl">
+    <Setter Property="Focusable" Value="False" />
+    <Setter Property="IsTabStop" Value="False" />
+    <Setter Property="Padding" Value="24" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="ContentControl">
+          <Border Background="{DynamicResource PanelBg}" BorderBrush="{DynamicResource PanelBorder}" BorderThickness="{DynamicResource PanelBorderThickness}"
+                  CornerRadius="{DynamicResource PanelRadius}" Padding="{TemplateBinding Padding}">
+            <ContentPresenter />
+          </Border>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <!-- The status field: a whole field of the state's soft colour (set as Background), with the giant light inside. -->
+  <Style x:Key="StatusField" TargetType="ContentControl">
+    <Setter Property="Focusable" Value="False" />
+    <Setter Property="IsTabStop" Value="False" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="ContentControl">
+          <Border Background="{TemplateBinding Background}" BorderBrush="{DynamicResource PanelBorder}" BorderThickness="{DynamicResource PanelBorderThickness}"
+                  CornerRadius="{DynamicResource PanelRadius}" ClipToBounds="True">
+            <ContentPresenter />
+          </Border>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <!-- The top bar: adapter and profile pickers, refresh, settings, Start. -->
+  <Style x:Key="TopBar" TargetType="Border">
+    <Setter Property="Background" Value="{DynamicResource TopBarBg}" />
+    <Setter Property="Padding" Value="{DynamicResource TopBarPadding}" />
+    <Setter Property="CornerRadius" Value="{DynamicResource PanelRadius}" />
+    <Setter Property="Margin" Value="0,0,0,16" />
+  </Style>
+
+  <!-- Status banners: a whole field of the state's soft colour. -->
+  <Style x:Key="Banner" TargetType="Border">
+    <Setter Property="BorderBrush" Value="{DynamicResource PanelBorder}" />
+    <Setter Property="BorderThickness" Value="{DynamicResource PanelBorderThickness}" />
+    <Setter Property="CornerRadius" Value="{DynamicResource PanelRadius}" />
+    <Setter Property="Padding" Value="24,16" />
+    <Setter Property="Margin" Value="0,0,0,16" />
+  </Style>
+
+  <Style x:Key="SectionTitle" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="{StaticResource TextLead}" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+  </Style>
+
+  <Style x:Key="Primary" TargetType="TextBlock">
+      <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+      <Setter Property="TextWrapping" Value="Wrap" />
+  </Style>
+
+  <Style x:Key="Secondary" TargetType="TextBlock">
+      <Setter Property="Foreground" Value="{DynamicResource TextSecondary}" />
+      <Setter Property="TextWrapping" Value="Wrap" />
+  </Style>
+
+  <Style x:Key="Meta" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="{StaticResource TextSmall}" />
+      <Setter Property="Foreground" Value="{DynamicResource TextMuted}" />
+  </Style>
+
+  <!-- Raw technical detail (packets, exceptions): the one place monospace belongs. -->
+  <Style x:Key="MonoBox" TargetType="TextBox">
+      <Setter Property="FontFamily" Value="{StaticResource MonoFont}" />
+      <Setter Property="FontSize" Value="{StaticResource TextSmall}" />
+      <Setter Property="IsReadOnly" Value="True" />
+      <Setter Property="TextWrapping" Value="Wrap" />
+      <Setter Property="MaxHeight" Value="224" />
+      <Setter Property="VerticalScrollBarVisibility" Value="Auto" />
+      <Setter Property="Background" Value="{DynamicResource MonoBg}" />
+      <Setter Property="Foreground" Value="{DynamicResource TextSecondary}" />
+      <Setter Property="BorderThickness" Value="0" />
+  </Style>
+
+  <!--
+      Buttons: one fill, with an edge and a gloss the look paints over it (both transparent in the faceplate look) and
+      corners the look sets from fully round to nearly square. Hover and press tint the fill with its own text colour;
+      keyboard focus draws a ring in the ink colour outside the button.
+  -->
+  <Style x:Key="PillButton" TargetType="Button">
+      <Setter Property="Background" Value="{DynamicResource RaisedBg}" />
+      <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+      <Setter Property="FontFamily" Value="{DynamicResource TextFont}" />
+      <Setter Property="FontSize" Value="{StaticResource TextBody}" />
+      <Setter Property="FontWeight" Value="Medium" />
+      <Setter Property="Padding" Value="20,0" />
+      <Setter Property="MinHeight" Value="40" />
+      <Setter Property="HorizontalContentAlignment" Value="Center" />
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+      <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
+      <Setter Property="Template">
+    <Setter.Value>
+        <ControlTemplate TargetType="Button">
+            <Grid>
+                <!-- Each layer's corner radius is its own height times the look's ButtonCornerScale (carried in Tag so it follows a live look change). -->
+                <Border x:Name="Ring" Margin="-4" BorderThickness="2" BorderBrush="Transparent" Tag="{DynamicResource ButtonCornerScale}"
+                        CornerRadius="{local:CornerScale}" />
+                <Border x:Name="Bg" Background="{TemplateBinding Background}" Tag="{DynamicResource ButtonCornerScale}"
+                        BorderBrush="{DynamicResource ButtonBorder}" BorderThickness="{DynamicResource ButtonBorderThickness}"
+                        CornerRadius="{local:CornerScale}" />
+                <Border x:Name="Gloss" Background="{DynamicResource ButtonGloss}" IsHitTestVisible="False" Tag="{DynamicResource ButtonCornerScale}"
+                        CornerRadius="{local:CornerScale}" />
+                <Border x:Name="Tint" Background="{TemplateBinding Foreground}" Opacity="0" Tag="{DynamicResource ButtonCornerScale}"
+                        CornerRadius="{local:CornerScale}" />
+                <ContentPresenter Margin="{TemplateBinding Padding}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="Center"
+                                  TextElement.Foreground="{TemplateBinding Foreground}" RecognizesAccessKey="True" />
+            </Grid>
+            <ControlTemplate.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter TargetName="Tint" Property="Opacity" Value="0.08" />
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter TargetName="Tint" Property="Opacity" Value="0.16" />
+                </Trigger>
+                <Trigger Property="IsKeyboardFocused" Value="True">
+                    <Setter TargetName="Ring" Property="BorderBrush" Value="{DynamicResource TextPrimary}" />
+                </Trigger>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Opacity" Value="0.4" />
+                </Trigger>
+            </ControlTemplate.Triggers>
+        </ControlTemplate>
+    </Setter.Value>
+      </Setter>
+  </Style>
+
+  <!-- The primary action: solid ink. -->
+  <Style x:Key="AccentButton" TargetType="Button" BasedOn="{StaticResource PillButton}">
+      <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+      <Setter Property="Foreground" Value="{DynamicResource AccentText}" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
+
+  <Style x:Key="SecondaryButton" TargetType="Button" BasedOn="{StaticResource PillButton}" />
+
+  <!-- Risky confirmations only. -->
+  <Style x:Key="DangerButton" TargetType="Button" BasedOn="{StaticResource PillButton}">
+      <Setter Property="Background" Value="{DynamicResource BadBrush}" />
+      <Setter Property="Foreground" Value="White" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
+
+  <!-- Round icon-only button. Always give it a ToolTip (shown on hover and keyboard focus) and an AutomationProperties.Name. -->
+  <Style x:Key="IconButton" TargetType="Button" BasedOn="{StaticResource PillButton}">
+      <Setter Property="FontFamily" Value="{StaticResource IconFont}" />
+      <Setter Property="FontWeight" Value="Normal" />
+      <Setter Property="Width" Value="48" />
+      <Setter Property="Height" Value="48" />
+      <Setter Property="Padding" Value="0" />
+  </Style>
+
+  <!-- A clickable list row: flat at rest, a tone step on hover, an ink ring on keyboard focus. -->
+  <Style x:Key="RowButton" TargetType="Button">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+      <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+      <Setter Property="Padding" Value="16,12" />
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+      <Setter Property="Template">
+    <Setter.Value>
+        <ControlTemplate TargetType="Button">
+            <Border x:Name="Bg" Background="{TemplateBinding Background}" BorderBrush="Transparent" BorderThickness="2"
+                    CornerRadius="{DynamicResource RowRadius}" Padding="{TemplateBinding Padding}">
+                <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" />
+            </Border>
+            <ControlTemplate.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter TargetName="Bg" Property="Background" Value="{DynamicResource RowHover}" />
+                </Trigger>
+                <Trigger Property="IsKeyboardFocused" Value="True">
+                    <Setter TargetName="Bg" Property="BorderBrush" Value="{DynamicResource TextPrimary}" />
+                </Trigger>
+            </ControlTemplate.Triggers>
+        </ControlTemplate>
+    </Setter.Value>
+      </Setter>
+  </Style>
+
+  <Style x:Key="FieldLabel" TargetType="Label">
+      <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+      <Setter Property="FontSize" Value="{StaticResource TextBody}" />
+      <Setter Property="FontWeight" Value="Medium" />
+      <Setter Property="Padding" Value="0" />
+      <Setter Property="Margin" Value="0,24,0,8" />
+  </Style>
+
+  <Style x:Key="FieldHelp" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="{StaticResource TextSmall}" />
+      <Setter Property="Foreground" Value="{DynamicResource TextSecondary}" />
+      <Setter Property="TextWrapping" Value="Wrap" />
+      <Setter Property="Margin" Value="0,8,0,0" />
+  </Style>
+</ResourceDictionary>

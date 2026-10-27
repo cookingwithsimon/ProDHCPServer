@@ -4,12 +4,14 @@ using Microsoft.Win32;
 namespace ProDHCPServer.App;
 
 /// <summary>
-/// Picks the app's look (a pair of resource dictionaries under Themes/) and swaps it together with WPF's Fluent
-/// ThemeMode so custom panels and standard controls always match. Every colour, font and shape the XAML reads with
-/// DynamicResource comes from the current look, so switching looks repaints the window live.
+/// Picks the app's look (resource dictionaries under Themes/) and swaps it together with WPF's Fluent ThemeMode so
+/// custom panels and standard controls always match. Every colour, font and shape the XAML reads with DynamicResource
+/// comes from the current look, so switching looks repaints the window live.
 ///
-/// To add a look: drop Themes/Name.Dark.xaml and Themes/Name.Light.xaml next to the others (copy Faceplate's and
-/// change the values; every key in it must be present) and add one line to <see cref="Looks"/>.
+/// A look is Themes/Name.Dark.xaml and Themes/Name.Light.xaml (colours, fonts, backdrop), each merging Shared.xaml
+/// (type scale, text styles, default shapes) and optionally a Name.Shapes.xaml that replaces the panel, status field,
+/// top bar, banner or button styles with its own templates. To add one: copy Faceplate's two files, change the values,
+/// and add one line to <see cref="Looks"/>.
 /// </summary>
 public static class Theme
 {
@@ -21,9 +23,9 @@ public static class Theme
 
     public static IReadOnlyList<Look> Looks { get; } =
     [
-        new("Faceplate", "Rack faceplate", "The default: flat, dark, one status light at every scale."),
-        new("FrutigerAero", "Frutiger Aero", "Glossy glass panels over a sky-and-grass backdrop, 2000s style."),
-        new("MetalHeart", "Metal Heart", "Brushed steel, bevelled edges and a chrome-red accent."),
+        new("Faceplate", "Rack faceplate", "The default: a flat front panel, one status light at every scale."),
+        new("FrutigerAero", "Frutiger Aero", "Glass widgets and orb lights over a sky full of bubbles, 2000s desktop style."),
+        new("MetalHeart", "Metal Heart", "Riveted steel plates, chrome bevels and an acid-green button, Winamp skin style."),
     ];
 
     public static Look DefaultLook => Looks[0];

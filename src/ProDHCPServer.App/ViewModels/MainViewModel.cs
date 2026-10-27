@@ -815,6 +815,7 @@ public sealed partial class MainViewModel : ObservableObject, IAsyncDisposable
         Theme.Apply(_settings.Theme, _settings.Look);
         foreach (var s in Steps) s.Repaint();
         OnPropertyChanged(nameof(HeadlineState));
+        OnPropertyChanged(nameof(IsRunning));
     }
 
     private void OpenUrl(string url)
