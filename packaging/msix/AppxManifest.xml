@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  MSIX manifest for the Microsoft Store build. tools/build-msix.ps1 fills in the $...$ values:
+  for the Store they come from Partner Center (Product identity), for a test build they are placeholders.
+-->
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+  IgnorableNamespaces="uap rescap">
+
+  <Identity Name="$IdentityName$" Publisher="$Publisher$" Version="$Version$" ProcessorArchitecture="x64" />
+
+  <Properties>
+    <DisplayName>ProDHCPServer</DisplayName>
+    <PublisherDisplayName>$PublisherDisplayName$</PublisherDisplayName>
+    <Logo>Images\StoreLogo.png</Logo>
+    <Description>Portable DHCP server for AV field technicians.</Description>
+  </Properties>
+
+  <Dependencies>
+    <!-- 1809: the first Windows 10 release that lets a packaged app elevate (allowElevation). Matches SupportedOSPlatformVersion. -->
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.17763.0" MaxVersionTested="10.0.26100.0" />
+  </Dependencies>
+
+  <Resources>
+    <Resource Language="en-us" />
+  </Resources>
+
+  <Applications>
+    <Application Id="ProDHCPServer" Executable="ProDHCPServer.exe" EntryPoint="Windows.FullTrustApplication">
+      <uap:VisualElements
+        DisplayName="ProDHCPServer"
+        Description="Portable DHCP server for AV field technicians."
+        BackgroundColor="transparent"
+        Square150x150Logo="Images\Square150x150Logo.png"
+        Square44x44Logo="Images\Square44x44Logo.png">
+        <uap:DefaultTile Wide310x150Logo="Images\Wide310x150Logo.png" />
+      </uap:VisualElements>
+    </Application>
+  </Applications>
+
+  <Capabilities>
+    <!-- A normal desktop (Win32) app. -->
+    <rescap:Capability Name="runFullTrust" />
+    <!-- Lets it restart itself with administrator rights (UAC prompt), which changing adapter settings and
+         serving DHCP on UDP port 67 need. Microsoft must approve this for the Store. -->
+    <rescap:Capability Name="allowElevation" />
+  </Capabilities>
+</Package>
