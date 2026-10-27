@@ -25,7 +25,7 @@ Most AV kit ships set to DHCP, and on a bench or a fresh site there's usually no
 - **Several devices at once** behind a small switch, each with its own lease.
 - **Spots a USB adapter that has stopped receiving.** Some USB Ethernet adapters keep showing "connected" but quietly stop receiving after a few seconds, which looks exactly like a silent device. If nothing has come in for 20 seconds while the laptop keeps sending, the cable/link step says so and tells you to replug the adapter. Realtek RTL8152/8153 adapters on a driver older than 2019 (including Windows' own 2015 driver) are flagged as soon as you pick them, with where to get the newer driver.
 - **Wi-Fi and VPN overlap warnings**, with a one-click option to turn Wi-Fi off until you press Stop.
-- **Dark and light themes**, with large status text you can read from arm's length.
+- **Dark and light themes** and a choice of looks (rack faceplate, Frutiger Aero, Metal Heart), with large status text you can read from arm's length.
 
 **Phase 2: visibility**
 
@@ -104,7 +104,7 @@ Each phase ends with a hardware test pass on real AV equipment before the next o
 
 | What | Where |
 |---|---|
-| Your settings (last adapter, profile in use, theme) | `%LOCALAPPDATA%\ProDHCPServer\settings.json` |
+| Your settings (last adapter, profile in use, look and theme) | `%LOCALAPPDATA%\ProDHCPServer\settings.json` |
 | Your profiles | `%LOCALAPPDATA%\ProDHCPServer\profiles.json` |
 | Adapter backup (only while a session runs, or after a crash) | `%ProgramData%\ProDHCPServer\adapter-backup.json` |
 

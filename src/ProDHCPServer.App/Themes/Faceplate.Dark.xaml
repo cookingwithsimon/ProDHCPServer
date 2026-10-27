@@ -1,0 +1,44 @@
+<!--
+    Rack faceplate, dark: a dark front panel with white legends. Surfaces are separated by tone, never by lines.
+    Colours and fonts only: the shapes come from Shared.xaml. Every key here is read with DynamicResource, so the set must
+    stay complete: copy this file to make a new look and change the values, not the keys.
+-->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <ResourceDictionary.MergedDictionaries>
+    <ResourceDictionary Source="Shared.xaml" />
+  </ResourceDictionary.MergedDictionaries>
+
+  <!-- Surfaces: one ground, a panel a tone step up, a raised step for the slide-over and selected rows. -->
+  <SolidColorBrush x:Key="WindowBg" Color="#0B0D10" />
+  <SolidColorBrush x:Key="PanelBg" Color="#15181C" />
+  <SolidColorBrush x:Key="RaisedBg" Color="#1E2227" />
+  <SolidColorBrush x:Key="RowHover" Color="#252A30" />
+  <SolidColorBrush x:Key="SlideOverBg" Color="#15181C" />
+  <SolidColorBrush x:Key="Scrim" Color="#A6000000" />
+
+  <!-- Ink -->
+  <SolidColorBrush x:Key="TextPrimary" Color="#F2F4F6" />
+  <SolidColorBrush x:Key="TextSecondary" Color="#B3BAC3" />
+  <SolidColorBrush x:Key="TextMuted" Color="#8A929C" />
+
+  <!-- Status colours, tuned for readability at arm's length. The Soft ones fill banners and the status field. -->
+  <SolidColorBrush x:Key="GoodBrush" Color="#3DD068" />
+  <SolidColorBrush x:Key="WarnBrush" Color="#F2A928" />
+  <SolidColorBrush x:Key="BadBrush" Color="#FF5A52" />
+  <SolidColorBrush x:Key="IdleBrush" Color="#4A515A" />
+  <SolidColorBrush x:Key="GoodSoft" Color="#10291A" />
+  <SolidColorBrush x:Key="WarnSoft" Color="#2E2309" />
+  <SolidColorBrush x:Key="BadSoft" Color="#361515" />
+  <SolidColorBrush x:Key="IdleSoft" Color="#15181C" />
+
+  <!-- The primary action and the box for raw technical detail -->
+  <SolidColorBrush x:Key="AccentBrush" Color="#F2F4F6" />
+  <SolidColorBrush x:Key="AccentText" Color="#0B0D10" />
+  <SolidColorBrush x:Key="MonoBg" Color="#0B0D10" />
+
+  <!-- Faces: TextFont for everything you read, DisplayFont for the few big things (status line, device IP, settings title). -->
+  <FontFamily x:Key="TextFont">pack://application:,,,/Assets/Fonts/#Figtree</FontFamily>
+  <FontFamily x:Key="DisplayFont">pack://application:,,,/Assets/Fonts/#League Spartan</FontFamily>
+  <FontFamily x:Key="ContentControlThemeFontFamily">pack://application:,,,/Assets/Fonts/#Figtree</FontFamily>
+</ResourceDictionary>

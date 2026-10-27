@@ -21,6 +21,8 @@ public sealed record AppSettings
     public bool AlwaysBroadcast { get; init; }
     /// <summary>"System", "Dark" or "Light".</summary>
     public string Theme { get; init; } = "System";
+    /// <summary>Which look the window uses (a name from the App's theme list); unknown values fall back to the default.</summary>
+    public string Look { get; init; } = "Faceplate";
 }
 
 public sealed class SettingsStore(string path)

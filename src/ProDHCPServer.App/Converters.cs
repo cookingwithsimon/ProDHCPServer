@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
+using System.Windows.Markup;
 using ProDHCPServer.Core;
 using ProDHCPServer.Core.Status;
 
@@ -31,6 +32,24 @@ public sealed class StateBrushConverter : IValueConverter
         };
         var resource = key == "TextSecondary" ? key : key + (soft ? "Soft" : "Brush");
         return Application.Current.TryFindResource(resource);
+    }
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotSupportedException();
+}
+
+/// <summary>
+/// IsRunning → the Start/Stop button's Background or Foreground (the ConverterParameter): solid ink to start, a quiet
+/// button to stop, since the status field already says the server is live. Looked up again after a look change.
+/// </summary>
+public sealed class RunningBrushConverter : IValueConverter
+{
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        bool running = value is true;
+        var key = parameter as string == "Foreground"
+            ? (running ? "TextPrimary" : "AccentText")
+            : (running ? "RaisedBg" : "AccentBrush");
+        return Application.Current.TryFindResource(key);
     }
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotSupportedException();
@@ -100,13 +119,29 @@ public sealed class LogDetailConverter : IValueConverter
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotSupportedException();
 }
 
-/// <summary>ActualHeight → a corner radius of half the height, so a Border is a true pill or circle at any size.</summary>
-public sealed class PillRadiusConverter : IValueConverter
+/// <summary>
+/// A corner radius of a Border's height times the look's ButtonCornerScale, which the Border carries in its Tag
+/// (0.5 makes a true pill or circle at any size, 0 a square). A fixed large radius would draw ovals in WPF, and the Tag
+/// lets the radius follow a live look change. Used as CornerRadius="{local:CornerScale}".
+/// </summary>
+public sealed class CornerScaleExtension : MarkupExtension, IMultiValueConverter
 {
-    public static readonly PillRadiusConverter Instance = new();
+    public override object ProvideValue(IServiceProvider serviceProvider) => new MultiBinding
+    {
+        Converter = this,
+        Bindings =
+        {
+            new Binding(nameof(FrameworkElement.ActualHeight)) { RelativeSource = RelativeSource.Self },
+            new Binding(nameof(FrameworkElement.Tag)) { RelativeSource = RelativeSource.Self },
+        },
+    }.ProvideValue(serviceProvider);
 
-    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture) =>
-        new CornerRadius(value is double h && h > 0 ? h / 2 : 0);
+    public object Convert(object[] values, Type targetType, object? parameter, CultureInfo culture)
+    {
+        var height = values.Length > 0 && values[0] is double h ? h : 0;
+        var scale = values.Length > 1 && values[1] is double d ? d : 0.5;
+        return new CornerRadius(height > 0 ? height * scale : 0);
+    }
 
-    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotSupportedException();
+    public object[] ConvertBack(object value, Type[] targetTypes, object? parameter, CultureInfo culture) => throw new NotSupportedException();
 }

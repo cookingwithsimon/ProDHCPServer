@@ -12,7 +12,7 @@
         Title="ProDHCPServer" Width="1320" Height="860" MinWidth="900" MinHeight="600"
         WindowStartupLocation="CenterScreen"
         Background="{DynamicResource WindowBg}"
-        FontFamily="{StaticResource TextFont}"
+        FontFamily="{DynamicResource TextFont}"
         Closing="OnClosing"
         SourceInitialized="OnSourceInitialized">
     <Window.InputBindings>
@@ -40,7 +40,8 @@
             </Grid.RowDefinitions>
 
             <!-- ===== Top bar: adapter picker, profile picker, refresh, settings, Start/Stop ===== -->
-            <Grid Grid.Row="0" Margin="0,0,0,16">
+            <Border Grid.Row="0" Style="{DynamicResource TopBar}">
+            <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
@@ -87,12 +88,15 @@
                           ItemsSource="{Binding Settings.Profiles}" SelectedItem="{Binding Settings.SelectedProfile}" DisplayMemberPath="Display"
                           IsEnabled="{Binding SettingsEditable}" ToolTip="The saved settings Start uses: subnet, pool, lease time and DHCP options" />
 
-                <Button Grid.Column="4" Style="{StaticResource IconButton}" Content="&#xE72C;" Width="56" Height="56" Margin="16,0,0,0"
+                <Button Grid.Column="4" Style="{DynamicResource IconButton}" Content="&#xE72C;" Width="56" Height="56" Margin="16,0,0,0"
                         Command="{Binding RefreshAdaptersCommand}" ToolTip="Refresh adapters (F5)" AutomationProperties.Name="Refresh adapters" />
-                <Button x:Name="SettingsButton" Grid.Column="5" Style="{StaticResource IconButton}" Content="&#xE713;" Width="56" Height="56" Margin="8,0,0,0"
+                <Button x:Name="SettingsButton" Grid.Column="5" Style="{DynamicResource IconButton}" Content="&#xE713;" Width="56" Height="56" Margin="8,0,0,0"
                         Command="{Binding ToggleSettingsCommand}" ToolTip="Edit profiles and settings (Ctrl+,)" AutomationProperties.Name="Edit profiles and settings" />
 
-                <Button Grid.Column="6" MinWidth="200" Height="56" Margin="16,0,0,0" Padding="28,0"
+                <!-- While running, Stop is a quiet button: the status field says the server is live. -->
+                <Button Grid.Column="6" MinWidth="200" Height="56" Margin="16,0,0,0" Padding="28,0" Style="{DynamicResource AccentButton}"
+                        Background="{Binding IsRunning, Converter={StaticResource RunningBrush}, ConverterParameter=Background}"
+                        Foreground="{Binding IsRunning, Converter={StaticResource RunningBrush}, ConverterParameter=Foreground}"
                         Command="{Binding StartStopCommand}" AutomationProperties.Name="{Binding StartStopText}">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock FontFamily="{StaticResource IconFont}" FontSize="{StaticResource TextBody}" VerticalAlignment="Center" Margin="0,0,12,0">
@@ -110,33 +114,25 @@
                         </TextBlock>
                         <TextBlock Text="{Binding StartStopText}" FontSize="{StaticResource TextLead}" FontWeight="SemiBold" VerticalAlignment="Center" />
                     </StackPanel>
-                    <Button.Style>
-                        <Style TargetType="Button" BasedOn="{StaticResource AccentButton}">
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding IsRunning}" Value="True">
-                                    <!-- While running, Stop is a quiet button: the status field says the server is live. -->
-                                    <Setter Property="Background" Value="{DynamicResource RaisedBg}" />
-                                    <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Button.Style>
                 </Button>
             </Grid>
+            </Border>
 
             <!-- ===== Status field: one line, readable from across the rack, beside a giant status light ===== -->
-            <Border Grid.Row="1" Margin="0,0,0,16" ClipToBounds="True" MinHeight="104"
-                    Background="{Binding HeadlineState, Converter={StaticResource StateBrush}, ConverterParameter=Soft}">
+            <ContentControl Grid.Row="1" Margin="0,0,0,16" MinHeight="104" Style="{DynamicResource StatusField}"
+                            Background="{Binding HeadlineState, Converter={StaticResource StateBrush}, ConverterParameter=Soft}">
                 <Grid>
-                    <!-- The light: cropped by the right edge of the field. Its colour is the state. -->
+                    <!-- The light: cropped by the right edge of the field. Its colour is the state; glossy looks paint a highlight over it. -->
                     <Ellipse Width="280" Height="280" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,-400,-100,-400"
                              Fill="{Binding HeadlineState, Converter={StaticResource StateBrush}}" />
+                    <Ellipse Width="280" Height="280" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,-400,-100,-400"
+                             Fill="{DynamicResource LightGloss}" IsHitTestVisible="False" />
                     <TextBlock Text="{Binding HeadlineState, Converter={StaticResource StateGlyph}, ConverterParameter=Hero}"
                                FontFamily="{StaticResource IconFont}" FontSize="{StaticResource TextHead}" Foreground="White"
                                HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,70,0"
                                AutomationProperties.Name="{Binding HeadlineState, Converter={StaticResource StateWord}}" />
                     <StackPanel VerticalAlignment="Center" Margin="32,16,232,16">
-                        <TextBlock Text="{Binding HeadlineText}" FontFamily="{StaticResource DisplayFont}" FontSize="{StaticResource TextHead}" FontWeight="Bold"
+                        <TextBlock Text="{Binding HeadlineText}" FontFamily="{DynamicResource DisplayFont}" FontSize="{StaticResource TextHead}" FontWeight="Bold"
                                    LineHeight="44" LineStackingStrategy="BlockLineHeight" Style="{StaticResource Primary}"
                                    AutomationProperties.LiveSetting="Assertive" />
                         <TextBlock Text="{Binding HeadlineAction}" FontSize="{StaticResource TextBody}" Margin="0,8,0,0" Style="{StaticResource Primary}"
@@ -144,26 +140,26 @@
                                    Visibility="{Binding HeadlineAction, Converter={StaticResource VisibleWhen}}" />
                     </StackPanel>
                 </Grid>
-            </Border>
+            </ContentControl>
 
             <!-- ===== Banners ===== -->
             <StackPanel Grid.Row="2">
                 <!-- Crash recovery -->
-                <Border Style="{StaticResource Banner}" Background="{DynamicResource WarnSoft}"
+                <Border Style="{DynamicResource Banner}" Background="{DynamicResource WarnSoft}"
                         Visibility="{Binding PendingRecovery, Converter={StaticResource VisibleWhen}}">
                     <Grid>
                         <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                         <Ellipse Width="16" Height="16" Fill="{DynamicResource WarnBrush}" VerticalAlignment="Center" Margin="0,0,16,0" />
                         <TextBlock Grid.Column="1" Text="{Binding RecoveryText}" FontSize="{StaticResource TextBody}" Style="{StaticResource Primary}" VerticalAlignment="Center" />
                         <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="24,0,0,0" VerticalAlignment="Center">
-                            <Button Content="Restore adapter" Style="{StaticResource AccentButton}" Command="{Binding RestorePendingCommand}" />
-                            <Button Content="Keep current settings" Style="{StaticResource SecondaryButton}" Margin="8,0,0,0" Command="{Binding DiscardPendingCommand}" />
+                            <Button Content="Restore adapter" Style="{DynamicResource AccentButton}" Command="{Binding RestorePendingCommand}" />
+                            <Button Content="Keep current settings" Style="{DynamicResource SecondaryButton}" Margin="8,0,0,0" Command="{Binding DiscardPendingCommand}" />
                         </StackPanel>
                     </Grid>
                 </Border>
 
                 <!-- Another DHCP server -->
-                <Border Style="{StaticResource Banner}" Background="{DynamicResource BadSoft}"
+                <Border Style="{DynamicResource Banner}" Background="{DynamicResource BadSoft}"
                         Visibility="{Binding OtherServerText, Converter={StaticResource VisibleWhen}}">
                     <StackPanel>
                         <Grid>
@@ -171,8 +167,8 @@
                             <Ellipse Width="16" Height="16" Fill="{DynamicResource BadBrush}" VerticalAlignment="Center" Margin="0,0,16,0" />
                             <TextBlock Grid.Column="1" Text="{Binding OtherServerText}" FontSize="{StaticResource TextBody}" FontWeight="SemiBold" Style="{StaticResource Primary}" VerticalAlignment="Center" />
                             <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="24,0,0,0" VerticalAlignment="Center">
-                                <Button Content="Stop server" Style="{StaticResource AccentButton}" Command="{Binding StartStopCommand}" />
-                                <Button Content="Serve anyway…" Style="{StaticResource SecondaryButton}" Margin="8,0,0,0" Command="{Binding ServeAnywayCommand}" />
+                                <Button Content="Stop server" Style="{DynamicResource AccentButton}" Command="{Binding StartStopCommand}" />
+                                <Button Content="Serve anyway…" Style="{DynamicResource SecondaryButton}" Margin="8,0,0,0" Command="{Binding ServeAnywayCommand}" />
                             </StackPanel>
                         </Grid>
                         <Expander Header="Technical detail" Margin="32,8,0,0" Foreground="{DynamicResource TextSecondary}"
@@ -183,7 +179,7 @@
                 </Border>
 
                 <!-- Errors -->
-                <Border Style="{StaticResource Banner}" Background="{DynamicResource BadSoft}"
+                <Border Style="{DynamicResource Banner}" Background="{DynamicResource BadSoft}"
                         Visibility="{Binding ErrorMessage, Converter={StaticResource VisibleWhen}}">
                     <StackPanel>
                         <Grid>
@@ -191,11 +187,11 @@
                             <Ellipse Width="16" Height="16" Fill="{DynamicResource BadBrush}" VerticalAlignment="Center" Margin="0,0,16,0" />
                             <TextBlock Grid.Column="1" Text="{Binding ErrorMessage}" FontSize="{StaticResource TextBody}" FontWeight="SemiBold" Style="{StaticResource Primary}" VerticalAlignment="Center" />
                             <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="24,0,0,0" VerticalAlignment="Center">
-                                <Button Content="Retry restore" Style="{StaticResource AccentButton}" Margin="0,0,8,0" Command="{Binding RetryRestoreCommand}"
+                                <Button Content="Retry restore" Style="{DynamicResource AccentButton}" Margin="0,0,8,0" Command="{Binding RetryRestoreCommand}"
                                         Visibility="{Binding CanRetryRestore, Converter={StaticResource VisibleWhen}}" />
-                                <Button Content="Copy error details" Style="{StaticResource SecondaryButton}" Margin="0,0,8,0" Command="{Binding CopyTextCommand}" CommandParameter="{Binding ErrorDetail}"
+                                <Button Content="Copy error details" Style="{DynamicResource SecondaryButton}" Margin="0,0,8,0" Command="{Binding CopyTextCommand}" CommandParameter="{Binding ErrorDetail}"
                                         Visibility="{Binding ErrorDetail, Converter={StaticResource VisibleWhen}}" />
-                                <Button Content="Dismiss" Style="{StaticResource SecondaryButton}" Command="{Binding DismissErrorCommand}" />
+                                <Button Content="Dismiss" Style="{DynamicResource SecondaryButton}" Command="{Binding DismissErrorCommand}" />
                             </StackPanel>
                         </Grid>
                         <Expander Header="Technical detail" Margin="32,8,0,0" Foreground="{DynamicResource TextSecondary}"
@@ -206,13 +202,13 @@
                 </Border>
 
                 <!-- Overlapping Wi-Fi/other adapter -->
-                <Border Style="{StaticResource Banner}" Background="{DynamicResource WarnSoft}"
+                <Border Style="{DynamicResource Banner}" Background="{DynamicResource WarnSoft}"
                         Visibility="{Binding ConflictText, Converter={StaticResource VisibleWhen}}">
                     <Grid>
                         <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                         <Ellipse Width="16" Height="16" Fill="{DynamicResource WarnBrush}" VerticalAlignment="Center" Margin="0,0,16,0" />
                         <TextBlock Grid.Column="1" Text="{Binding ConflictText}" FontSize="{StaticResource TextBody}" Style="{StaticResource Primary}" VerticalAlignment="Center" />
-                        <Button Grid.Column="2" Content="Turn it off until Stop" Style="{StaticResource AccentButton}" Margin="24,0,0,0" VerticalAlignment="Center"
+                        <Button Grid.Column="2" Content="Turn it off until Stop" Style="{DynamicResource AccentButton}" Margin="24,0,0,0" VerticalAlignment="Center"
                                 Command="{Binding TurnOffConflictingCommand}" />
                     </Grid>
                 </Border>
@@ -227,7 +223,7 @@
                 </Grid.ColumnDefinitions>
 
                 <!-- Status checks: the chain from adapter to device, top to bottom in the order a tech would check them -->
-                <Border Style="{StaticResource Panel}" Padding="0">
+                <ContentControl Style="{DynamicResource Panel}" Padding="0">
                     <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,8">
                         <ItemsControl ItemsSource="{Binding Steps}" AutomationProperties.Name="Status checks">
                             <ItemsControl.ItemTemplate>
@@ -257,6 +253,17 @@
                                                         </Style>
                                                     </Ellipse.Style>
                                                 </Ellipse>
+                                                <Ellipse Fill="{DynamicResource LightGloss}" IsHitTestVisible="False">
+                                                    <Ellipse.Style>
+                                                        <Style TargetType="Ellipse">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding State}" Value="{x:Static status:StepState.Idle}">
+                                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Ellipse.Style>
+                                                </Ellipse>
                                                 <TextBlock Text="{Binding State, Converter={StaticResource StateGlyph}}" FontFamily="{StaticResource IconFont}"
                                                            Foreground="White" FontSize="{StaticResource TextSmall}"
                                                            HorizontalAlignment="Center" VerticalAlignment="Center" />
@@ -277,10 +284,10 @@
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
                     </ScrollViewer>
-                </Border>
+                </ContentControl>
 
                 <!-- Device panel -->
-                <Border Grid.Column="2" Style="{StaticResource Panel}" Padding="32,24">
+                <ContentControl Grid.Column="2" Style="{DynamicResource Panel}" Padding="32,24">
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <StackPanel>
                             <!-- No device yet: say what goes here and give the next step -->
@@ -298,7 +305,7 @@
                                         </Style>
                                     </TextBlock.Style>
                                 </TextBlock>
-                                <Button Content="Start server" Style="{StaticResource AccentButton}" HorizontalAlignment="Left" Margin="0,24,0,0" MinHeight="48"
+                                <Button Content="Start server" Style="{DynamicResource AccentButton}" HorizontalAlignment="Left" Margin="0,24,0,0" MinHeight="48"
                                         Command="{Binding StartStopCommand}"
                                         Visibility="{Binding IsRunning, Converter={StaticResource VisibleWhen}, ConverterParameter=Invert}" />
                             </StackPanel>
@@ -309,9 +316,9 @@
                                 <TextBlock Text="{Binding Vendor}" FontSize="{StaticResource TextBody}" Style="{StaticResource Secondary}" />
                                 <Grid Margin="0,16,0,0">
                                     <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                                    <TextBlock Text="{Binding Ip}" FontFamily="{StaticResource DisplayFont}" FontSize="{StaticResource TextDisplay}" FontWeight="Bold"
+                                    <TextBlock Text="{Binding Ip}" FontFamily="{DynamicResource DisplayFont}" FontSize="{StaticResource TextDisplay}" FontWeight="Bold"
                                                Style="{StaticResource Primary}" TextWrapping="NoWrap" VerticalAlignment="Center" AutomationProperties.Name="Device IP address" />
-                                    <Button Grid.Column="1" Style="{StaticResource IconButton}" Content="&#xE8C8;" Margin="16,0,0,8" VerticalAlignment="Center"
+                                    <Button Grid.Column="1" Style="{DynamicResource IconButton}" Content="&#xE8C8;" Margin="16,0,0,8" VerticalAlignment="Center"
                                             ToolTip="Copy IP address" AutomationProperties.Name="Copy IP address"
                                             Command="{Binding DataContext.CopyIpCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" />
                                 </Grid>
@@ -340,7 +347,7 @@
                             </StackPanel>
 
                             <StackPanel Visibility="{Binding FocusedDevice, Converter={StaticResource VisibleWhen}}" Margin="0,24,0,0">
-                                <Button Style="{StaticResource AccentButton}" FontSize="{StaticResource TextLead}" Height="56" HorizontalAlignment="Stretch"
+                                <Button Style="{DynamicResource AccentButton}" FontSize="{StaticResource TextLead}" Height="56" HorizontalAlignment="Stretch"
                                         Command="{Binding OpenWebUiCommand}" ToolTip="Opens the device in your browser (http or https, whichever port is open)">
                                     <StackPanel Orientation="Horizontal">
                                         <TextBlock Text="&#xE774;" FontFamily="{StaticResource IconFont}" FontSize="{StaticResource TextBody}" VerticalAlignment="Center" Margin="0,0,12,0" />
@@ -350,10 +357,10 @@
                                 <TextBlock Text="{Binding WebUiHint}" Style="{StaticResource Meta}" Margin="0,8,0,0" HorizontalAlignment="Center" />
                                 <TextBlock Text="Or open a specific port" FontSize="{StaticResource TextBody}" Style="{StaticResource Secondary}" Margin="0,24,0,8" />
                                 <WrapPanel>
-                                    <Button Content="Open http :80" Style="{StaticResource SecondaryButton}" Margin="0,0,8,8" Command="{Binding OpenPortCommand}" CommandParameter="http:80" />
-                                    <Button Content="Open https :443" Style="{StaticResource SecondaryButton}" Margin="0,0,8,8" Command="{Binding OpenPortCommand}" CommandParameter="https:443" />
-                                    <Button Content="Open http :8080" Style="{StaticResource SecondaryButton}" Margin="0,0,8,8" Command="{Binding OpenPortCommand}" CommandParameter="http:8080" />
-                                    <Button Content="Open https :8443" Style="{StaticResource SecondaryButton}" Margin="0,0,8,8" Command="{Binding OpenPortCommand}" CommandParameter="https:8443" />
+                                    <Button Content="Open http :80" Style="{DynamicResource SecondaryButton}" Margin="0,0,8,8" Command="{Binding OpenPortCommand}" CommandParameter="http:80" />
+                                    <Button Content="Open https :443" Style="{DynamicResource SecondaryButton}" Margin="0,0,8,8" Command="{Binding OpenPortCommand}" CommandParameter="https:443" />
+                                    <Button Content="Open http :8080" Style="{DynamicResource SecondaryButton}" Margin="0,0,8,8" Command="{Binding OpenPortCommand}" CommandParameter="http:8080" />
+                                    <Button Content="Open https :8443" Style="{DynamicResource SecondaryButton}" Margin="0,0,8,8" Command="{Binding OpenPortCommand}" CommandParameter="https:8443" />
                                 </WrapPanel>
                             </StackPanel>
 
@@ -413,7 +420,7 @@
                                     <TextBlock FontSize="{StaticResource TextBody}" Style="{StaticResource Primary}" VerticalAlignment="Center" TextWrapping="Wrap">
                                         <Run Text="Found on the network" FontWeight="SemiBold" /><Run Text="   " /><Run Text="{Binding FoundCountText, Mode=OneWay}" Foreground="{DynamicResource TextMuted}" />
                                     </TextBlock>
-                                    <Button Grid.Column="1" Style="{StaticResource SecondaryButton}" Command="{Binding SweepCommand}" Margin="16,0,0,0"
+                                    <Button Grid.Column="1" Style="{DynamicResource SecondaryButton}" Command="{Binding SweepCommand}" Margin="16,0,0,0"
                                             ToolTip="Looks for devices with static IPs on this laptop's subnet, the brand presets' subnets and any subnet a device was seen on. Uses a temporary address on each, removed afterwards.">
                                         <StackPanel Orientation="Horizontal">
                                             <TextBlock Text="&#xE721;" FontFamily="{StaticResource IconFont}" VerticalAlignment="Center" Margin="0,0,8,0" />
@@ -444,7 +451,7 @@
                                 <ItemsControl ItemsSource="{Binding Found}" AutomationProperties.Name="Found on the network">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate DataType="{x:Type vm:FoundDeviceViewModel}">
-                                            <Border Margin="0,0,0,4" Padding="16,12" Background="{DynamicResource RaisedBg}" ToolTip="{Binding Detail}">
+                                            <Border Margin="0,0,0,4" Padding="16,12" Background="{DynamicResource RaisedBg}" CornerRadius="{DynamicResource RowRadius}" ToolTip="{Binding Detail}">
                                                 <Grid>
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" />
@@ -459,17 +466,17 @@
                                                                    Foreground="{Binding StateColour, Converter={StaticResource StateBrush}}" />
                                                     </StackPanel>
                                                     <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="16,0,0,0" VerticalAlignment="Center">
-                                                        <Button Content="Reach it" Style="{StaticResource AccentButton}"
+                                                        <Button Content="Reach it" Style="{DynamicResource AccentButton}"
                                                                 Command="{Binding DataContext.ReachCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}"
                                                                 IsEnabled="{Binding IsIdle}"
                                                                 Visibility="{Binding IsReachable, Converter={StaticResource VisibleWhen}, ConverterParameter=Invert}"
                                                                 ToolTip="Adds an address on this device's subnet to your adapter until Stop, so you can open its WebUI"
                                                                 AutomationProperties.Name="{Binding Ip, StringFormat='Reach {0}'}" />
-                                                        <Button Content="Open WebUI" Style="{StaticResource SecondaryButton}"
+                                                        <Button Content="Open WebUI" Style="{DynamicResource SecondaryButton}"
                                                                 Command="{Binding DataContext.OpenFoundCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}"
                                                                 Visibility="{Binding IsReachable, Converter={StaticResource VisibleWhen}}"
                                                                 AutomationProperties.Name="{Binding Ip, StringFormat='Open the WebUI of {0}'}" />
-                                                        <Button Style="{StaticResource IconButton}" Content="&#xE8C8;" Width="40" Height="40" Margin="8,0,0,0"
+                                                        <Button Style="{DynamicResource IconButton}" Content="&#xE8C8;" Width="40" Height="40" Margin="8,0,0,0"
                                                                 Command="{Binding DataContext.CopyTextCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding Ip}"
                                                                 ToolTip="Copy IP address" AutomationProperties.Name="Copy IP address" />
                                                     </StackPanel>
@@ -481,11 +488,11 @@
                             </StackPanel>
                         </StackPanel>
                     </ScrollViewer>
-                </Border>
+                </ContentControl>
             </Grid>
 
             <!-- ===== Session log ===== -->
-            <Border Grid.Row="4" Style="{StaticResource Panel}" Padding="24,0" Margin="0,16,0,0">
+            <ContentControl Grid.Row="4" Style="{DynamicResource Panel}" Padding="24,0" Margin="0,16,0,0">
                 <Expander x:Name="LogExpander" Foreground="{DynamicResource TextSecondary}">
                     <Expander.Header>
                         <TextBlock TextTrimming="CharacterEllipsis" FontSize="{StaticResource TextSmall}" Typography.NumeralAlignment="Tabular">
@@ -520,8 +527,8 @@
                             <TextBox Grid.Column="2" Text="{Binding LogSearch, UpdateSourceTrigger=PropertyChanged, Delay=200}" Margin="8,0,0,0" FontSize="{StaticResource TextSmall}"
                                      VerticalContentAlignment="Center" AutomationProperties.Name="Search the log" ToolTip="Search the log, for example an IP or MAC address" />
                             <TextBlock Grid.Column="3" Text="{Binding LogCountText}" Style="{StaticResource Meta}" Margin="16,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
-                            <Button Grid.Column="4" Content="Show everything" Style="{StaticResource SecondaryButton}" Margin="0,0,8,0" Command="{Binding ClearLogFilterCommand}" />
-                            <Button Grid.Column="5" Style="{StaticResource SecondaryButton}" Command="{Binding ExportLogCommand}"
+                            <Button Grid.Column="4" Content="Show everything" Style="{DynamicResource SecondaryButton}" Margin="0,0,8,0" Command="{Binding ClearLogFilterCommand}" />
+                            <Button Grid.Column="5" Style="{DynamicResource SecondaryButton}" Command="{Binding ExportLogCommand}"
                                     ToolTip="Save the entries shown here as a text file (for a job report) or CSV (for Excel)">
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock Text="&#xEDE1;" FontFamily="{StaticResource IconFont}" VerticalAlignment="Center" Margin="0,0,8,0" />
@@ -552,13 +559,14 @@
                                  Text="{Binding SelectedItem.Entry, ElementName=LogList, Mode=OneWay, Converter={x:Static local:LogDetailConverter.Instance}, TargetNullValue='Select a log line to see its details.', FallbackValue='Select a log line to see its details.'}" />
                     </Grid>
                 </Expander>
-            </Border>
+            </ContentControl>
         </Grid>
 
         <!-- ===== Settings slide-over: the status stays visible behind it ===== -->
         <Grid x:Name="SettingsLayer" Visibility="{Binding SettingsOpen, Converter={StaticResource VisibleWhen}}">
             <Border Background="{DynamicResource Scrim}" MouseLeftButtonDown="OnScrimClicked" />
-            <Border x:Name="SettingsPanel" Width="448" HorizontalAlignment="Right" Background="{DynamicResource PanelBg}"
+            <Border x:Name="SettingsPanel" Width="448" HorizontalAlignment="Right" Background="{DynamicResource SlideOverBg}"
+                    BorderBrush="{DynamicResource PanelBorder}" BorderThickness="{DynamicResource SlideOverBorderThickness}"
                     KeyboardNavigation.TabNavigation="Cycle" KeyboardNavigation.ControlTabNavigation="Cycle"
                     AutomationProperties.Name="Profiles and settings">
                 <Border.RenderTransform>
@@ -567,9 +575,9 @@
                 <DockPanel DataContext="{Binding Settings}">
                     <!-- Header -->
                     <Grid DockPanel.Dock="Top" Margin="32,24,24,0">
-                        <TextBlock Text="Profiles" FontFamily="{StaticResource DisplayFont}" FontSize="{StaticResource TextHead}" FontWeight="Bold"
+                        <TextBlock Text="Profiles" FontFamily="{DynamicResource DisplayFont}" FontSize="{StaticResource TextHead}" FontWeight="Bold"
                                    Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center" />
-                        <Button x:Name="CloseSettingsButton" Style="{StaticResource IconButton}" Content="&#xE711;" HorizontalAlignment="Right"
+                        <Button x:Name="CloseSettingsButton" Style="{DynamicResource IconButton}" Content="&#xE711;" HorizontalAlignment="Right"
                                 Command="{Binding DataContext.CloseSettingsCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                 ToolTip="Close (Esc)" AutomationProperties.Name="Close profiles and settings" />
                     </Grid>
@@ -577,15 +585,15 @@
                     <!-- Footer: always clickable for your own profiles; Save shows what needs fixing -->
                     <Border DockPanel.Dock="Bottom" Background="{DynamicResource RaisedBg}" Padding="32,16">
                         <StackPanel Orientation="Horizontal">
-                            <Button Content="Save profile" Style="{StaticResource AccentButton}" MinHeight="48" Command="{Binding SaveCommand}" />
-                            <Button Content="Discard changes" Style="{StaticResource SecondaryButton}" MinHeight="48" Margin="8,0,0,0" Background="{DynamicResource PanelBg}"
+                            <Button Content="Save profile" Style="{DynamicResource AccentButton}" MinHeight="48" Command="{Binding SaveCommand}" />
+                            <Button Content="Discard changes" Style="{DynamicResource SecondaryButton}" MinHeight="48" Margin="8,0,0,0" Background="{DynamicResource PanelBg}"
                                     Command="{Binding DiscardCommand}" />
                         </StackPanel>
                     </Border>
 
                     <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="32,0,32,24">
                         <StackPanel>
-                            <Border Style="{StaticResource Banner}" Margin="0,16,0,0" Padding="16,12" Background="{DynamicResource WarnSoft}"
+                            <Border Style="{DynamicResource Banner}" Margin="0,16,0,0" Padding="16,12" Background="{DynamicResource WarnSoft}"
                                     Visibility="{Binding IsLocked, Converter={StaticResource VisibleWhen}}">
                                 <TextBlock Text="The server is running. Stop it to change or switch profiles; the theme can change any time." FontSize="{StaticResource TextBody}" Style="{StaticResource Primary}" />
                             </Border>
@@ -596,20 +604,20 @@
                                       IsEnabled="{Binding CanManage}" FontSize="{StaticResource TextBody}" HorizontalAlignment="Stretch" />
                             <TextBlock Text="Start uses the profile picked here." Style="{StaticResource FieldHelp}" />
                             <WrapPanel Margin="0,12,0,0">
-                                <Button Content="New" Style="{StaticResource SecondaryButton}" Margin="0,0,8,8" Command="{Binding NewCommand}" ToolTip="Make a new profile from the defaults" />
-                                <Button Content="Duplicate" Style="{StaticResource SecondaryButton}" Margin="0,0,8,8" Command="{Binding DuplicateCommand}" ToolTip="Copy this profile so you can change it" />
-                                <Button Content="Import…" Style="{StaticResource SecondaryButton}" Margin="0,0,8,8" Command="{Binding ImportCommand}" ToolTip="Add profiles from a file someone exported" />
-                                <Button Content="Export…" Style="{StaticResource SecondaryButton}" Margin="0,0,8,8" Command="{Binding ExportCommand}" ToolTip="Save this profile to a file to share or back up" />
-                                <Button Content="Delete" Style="{StaticResource DangerButton}" Margin="0,0,8,8" Command="{Binding DeleteCommand}"
+                                <Button Content="New" Style="{DynamicResource SecondaryButton}" Margin="0,0,8,8" Command="{Binding NewCommand}" ToolTip="Make a new profile from the defaults" />
+                                <Button Content="Duplicate" Style="{DynamicResource SecondaryButton}" Margin="0,0,8,8" Command="{Binding DuplicateCommand}" ToolTip="Copy this profile so you can change it" />
+                                <Button Content="Import…" Style="{DynamicResource SecondaryButton}" Margin="0,0,8,8" Command="{Binding ImportCommand}" ToolTip="Add profiles from a file someone exported" />
+                                <Button Content="Export…" Style="{DynamicResource SecondaryButton}" Margin="0,0,8,8" Command="{Binding ExportCommand}" ToolTip="Save this profile to a file to share or back up" />
+                                <Button Content="Delete" Style="{DynamicResource DangerButton}" Margin="0,0,8,8" Command="{Binding DeleteCommand}"
                                         Visibility="{Binding IsPreset, Converter={StaticResource VisibleWhen}, ConverterParameter=Invert}" />
                             </WrapPanel>
 
-                            <Border Style="{StaticResource Banner}" Margin="0,8,0,0" Padding="16,12" Background="{DynamicResource RaisedBg}"
+                            <Border Style="{DynamicResource Banner}" Margin="0,8,0,0" Padding="16,12" Background="{DynamicResource RaisedBg}"
                                     Visibility="{Binding Notice, Converter={StaticResource VisibleWhen}}">
                                 <TextBlock Text="{Binding Notice}" FontSize="{StaticResource TextBody}" Style="{StaticResource Primary}" AutomationProperties.LiveSetting="Polite" />
                             </Border>
 
-                            <Border Style="{StaticResource Banner}" Margin="0,8,0,0" Padding="16,12" Background="{DynamicResource RaisedBg}"
+                            <Border Style="{DynamicResource Banner}" Margin="0,8,0,0" Padding="16,12" Background="{DynamicResource RaisedBg}"
                                     Visibility="{Binding IsPreset, Converter={StaticResource VisibleWhen}}">
                                 <StackPanel>
                                     <TextBlock Text="{Binding Notes}" FontSize="{StaticResource TextBody}" Style="{StaticResource Primary}" />
@@ -659,7 +667,7 @@
                                     <TextBox Grid.Column="2" Text="{Binding PoolEnd, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}"
                                              AutomationProperties.Name="Last address in the pool" />
                                 </Grid>
-                                <Button Content="Suggest a pool for this subnet" Style="{StaticResource SecondaryButton}" Margin="0,8,0,0" HorizontalAlignment="Left"
+                                <Button Content="Suggest a pool for this subnet" Style="{DynamicResource SecondaryButton}" Margin="0,8,0,0" HorizontalAlignment="Left"
                                         Command="{Binding SuggestPoolCommand}" />
 
                                 <Label Content="Lease _time (minutes)" Target="{Binding ElementName=LeaseBox}" Style="{StaticResource FieldLabel}" />
@@ -718,28 +726,34 @@
                                                                   FontSize="{StaticResource TextSmall}" AutomationProperties.Name="Value type" />
                                                         <TextBox Grid.Column="2" Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" Margin="8,0,0,0"
                                                                  AutomationProperties.Name="Option value" />
-                                                        <Button Grid.Column="3" Style="{StaticResource IconButton}" Content="&#xE74D;" Width="40" Height="40" Margin="8,0,0,0"
+                                                        <Button Grid.Column="3" Style="{DynamicResource IconButton}" Content="&#xE74D;" Width="40" Height="40" Margin="8,0,0,0"
                                                                 Command="{Binding DataContext.RemoveCustomOptionCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}"
                                                                 ToolTip="Remove this option" AutomationProperties.Name="Remove this option" />
                                                     </Grid>
                                                 </DataTemplate>
                                             </ItemsControl.ItemTemplate>
                                         </ItemsControl>
-                                        <Button Content="Add an option" Style="{StaticResource SecondaryButton}" HorizontalAlignment="Left" Command="{Binding AddCustomOptionCommand}" />
+                                        <Button Content="Add an option" Style="{DynamicResource SecondaryButton}" HorizontalAlignment="Left" Command="{Binding AddCustomOptionCommand}" />
                                         <TextBlock Text="Text for names and URLs, Addresses for IP lists, Hex for anything else." Style="{StaticResource FieldHelp}" />
                                     </StackPanel>
                                 </Expander>
                             </StackPanel>
 
-                            <Border Style="{StaticResource Banner}" Margin="0,24,0,0" Padding="16,12" Background="{DynamicResource BadSoft}"
+                            <Border Style="{DynamicResource Banner}" Margin="0,24,0,0" Padding="16,12" Background="{DynamicResource BadSoft}"
                                     Visibility="{Binding Errors, Converter={StaticResource VisibleWhen}}">
                                 <TextBlock Text="{Binding Errors}" FontSize="{StaticResource TextBody}" Style="{StaticResource Primary}"
                                            AutomationProperties.LiveSetting="Polite" />
                             </Border>
 
-                            <Label Content="T_heme" Target="{Binding ElementName=ThemeBox}" Style="{StaticResource FieldLabel}" Margin="0,32,0,8" />
+                            <!-- Appearance: which look, then dark or light. Both apply straight away and are remembered. -->
+                            <Label Content="Loo_k" Target="{Binding ElementName=LookBox}" Style="{StaticResource FieldLabel}" Margin="0,32,0,8" />
+                            <ComboBox x:Name="LookBox" ItemsSource="{x:Static vm:SettingsViewModel.Looks}" SelectedItem="{Binding Look}" DisplayMemberPath="Name"
+                                      FontSize="{StaticResource TextBody}" HorizontalAlignment="Stretch" />
+                            <TextBlock Text="{Binding Look.Blurb}" Style="{StaticResource FieldHelp}" />
+
+                            <Label Content="Dark or l_ight" Target="{Binding ElementName=ThemeBox}" Style="{StaticResource FieldLabel}" />
                             <ComboBox x:Name="ThemeBox" ItemsSource="{x:Static vm:SettingsViewModel.Themes}" SelectedItem="{Binding Theme}" FontSize="{StaticResource TextBody}" HorizontalAlignment="Stretch" />
-                            <TextBlock Text="Applies straight away, for every profile." Style="{StaticResource FieldHelp}" />
+                            <TextBlock Text="System follows Windows. Both apply straight away, for every profile." Style="{StaticResource FieldHelp}" />
                         </StackPanel>
                     </ScrollViewer>
                 </DockPanel>

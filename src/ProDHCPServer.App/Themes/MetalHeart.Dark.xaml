@@ -1,0 +1,215 @@
+<!--
+    Metal Heart, dark: gunmetal plates over shattered chrome on black, with a red crack running through it, a red
+    chrome primary button and Orbitron for the big type (the Winamp and Sonique skin era). Shapes are in
+    MetalHeart.Shapes.xaml.
+-->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <ResourceDictionary.MergedDictionaries>
+    <ResourceDictionary Source="Shared.xaml" />
+    <ResourceDictionary Source="MetalHeart.Shapes.xaml" />
+  </ResourceDictionary.MergedDictionaries>
+
+  <!-- The backdrop: black, shattered into chrome shards from the top right, with a red crack and glow. Drawn at 1600x1000 and scaled to fill. -->
+  <DrawingBrush x:Key="WindowBg" Stretch="UniformToFill" Viewbox="0,0,1600,1000" ViewboxUnits="Absolute">
+    <DrawingBrush.Drawing>
+      <DrawingGroup>
+        <GeometryDrawing>
+          <GeometryDrawing.Geometry><RectangleGeometry Rect="0,0,1600,1000" /></GeometryDrawing.Geometry>
+          <GeometryDrawing.Brush>
+            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+              <GradientStop Color="#1C1F24" Offset="0" />
+              <GradientStop Color="#07080A" Offset="0.55" />
+              <GradientStop Color="#15171B" Offset="1" />
+            </LinearGradientBrush>
+          </GeometryDrawing.Brush>
+        </GeometryDrawing>
+        <GeometryDrawing>
+          <GeometryDrawing.Geometry><EllipseGeometry Center="1500,100" RadiusX="800" RadiusY="600" /></GeometryDrawing.Geometry>
+          <GeometryDrawing.Brush>
+            <RadialGradientBrush><GradientStop Color="#40FFFFFF" Offset="0" /><GradientStop Color="#00FFFFFF" Offset="1" /></RadialGradientBrush>
+          </GeometryDrawing.Brush>
+        </GeometryDrawing>
+        <GeometryDrawing Geometry="M0,0 L420,0 L300,180 Z">
+          <GeometryDrawing.Brush>
+            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1"><GradientStop Color="#F2FFFFFF" Offset="0" /><GradientStop Color="#66FFFFFF" Offset="0.35" /><GradientStop Color="#00FFFFFF" Offset="1" /></LinearGradientBrush>
+          </GeometryDrawing.Brush>
+          <GeometryDrawing.Pen><Pen Thickness="1.5"><Pen.Brush><SolidColorBrush Color="#B3FFFFFF" /></Pen.Brush></Pen></GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing Geometry="M300,180 L420,0 L700,0 L560,260 Z">
+          <GeometryDrawing.Brush>
+            <LinearGradientBrush StartPoint="1,0" EndPoint="0,1"><GradientStop Color="#CC2A2E35" Offset="0" /><GradientStop Color="#CC2A2E35" Offset="0.35" /><GradientStop Color="#FF050607" Offset="1" /></LinearGradientBrush>
+          </GeometryDrawing.Brush>
+          <GeometryDrawing.Pen><Pen Thickness="1.5"><Pen.Brush><SolidColorBrush Color="#B3FFFFFF" /></Pen.Brush></Pen></GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing Geometry="M0,0 L0,300 L300,180 Z">
+          <GeometryDrawing.Brush>
+            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1"><GradientStop Color="#CC2A2E35" Offset="0" /><GradientStop Color="#CC2A2E35" Offset="0.35" /><GradientStop Color="#FF050607" Offset="1" /></LinearGradientBrush>
+          </GeometryDrawing.Brush>
+          <GeometryDrawing.Pen><Pen Thickness="1.5"><Pen.Brush><SolidColorBrush Color="#B3FFFFFF" /></Pen.Brush></Pen></GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing Geometry="M560,260 L700,0 L980,120 L860,300 Z">
+          <GeometryDrawing.Brush>
+            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1"><GradientStop Color="#F2FFFFFF" Offset="0" /><GradientStop Color="#66FFFFFF" Offset="0.35" /><GradientStop Color="#00FFFFFF" Offset="1" /></LinearGradientBrush>
+          </GeometryDrawing.Brush>
+          <GeometryDrawing.Pen><Pen Thickness="1.5"><Pen.Brush><SolidColorBrush Color="#B3FFFFFF" /></Pen.Brush></Pen></GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing Geometry="M0,300 L300,180 L560,260 L340,760 L0,700 Z">
+          <GeometryDrawing.Brush>
+            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1"><GradientStop Color="#CC2A2E35" Offset="0" /><GradientStop Color="#CC2A2E35" Offset="0.35" /><GradientStop Color="#FF050607" Offset="1" /></LinearGradientBrush>
+          </GeometryDrawing.Brush>
+          <GeometryDrawing.Pen><Pen Thickness="1.5"><Pen.Brush><SolidColorBrush Color="#B3FFFFFF" /></Pen.Brush></Pen></GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing Geometry="M560,260 L860,300 L760,520 L700,740 L340,760 Z">
+          <GeometryDrawing.Brush>
+            <LinearGradientBrush StartPoint="1,0" EndPoint="0,1"><GradientStop Color="#F2FFFFFF" Offset="0" /><GradientStop Color="#66FFFFFF" Offset="0.35" /><GradientStop Color="#00FFFFFF" Offset="1" /></LinearGradientBrush>
+          </GeometryDrawing.Brush>
+          <GeometryDrawing.Pen><Pen Thickness="1.5"><Pen.Brush><SolidColorBrush Color="#B3FFFFFF" /></Pen.Brush></Pen></GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing Geometry="M340,760 L700,740 L820,1000 L360,1000 L420,860 Z">
+          <GeometryDrawing.Brush>
+            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1"><GradientStop Color="#CC2A2E35" Offset="0" /><GradientStop Color="#CC2A2E35" Offset="0.35" /><GradientStop Color="#FF050607" Offset="1" /></LinearGradientBrush>
+          </GeometryDrawing.Brush>
+          <GeometryDrawing.Pen><Pen Thickness="1.5"><Pen.Brush><SolidColorBrush Color="#B3FFFFFF" /></Pen.Brush></Pen></GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing Geometry="M1600,0 L1180,0 L1420,260 Z">
+          <GeometryDrawing.Brush>
+            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1"><GradientStop Color="#F2FFFFFF" Offset="0" /><GradientStop Color="#66FFFFFF" Offset="0.35" /><GradientStop Color="#00FFFFFF" Offset="1" /></LinearGradientBrush>
+          </GeometryDrawing.Brush>
+          <GeometryDrawing.Pen><Pen Thickness="1.5"><Pen.Brush><SolidColorBrush Color="#B3FFFFFF" /></Pen.Brush></Pen></GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing Geometry="M1600,0 L1600,420 L1360,300 Z">
+          <GeometryDrawing.Brush>
+            <LinearGradientBrush StartPoint="1,0" EndPoint="0,1"><GradientStop Color="#CC2A2E35" Offset="0" /><GradientStop Color="#CC2A2E35" Offset="0.35" /><GradientStop Color="#FF050607" Offset="1" /></LinearGradientBrush>
+          </GeometryDrawing.Brush>
+          <GeometryDrawing.Pen><Pen Thickness="1.5"><Pen.Brush><SolidColorBrush Color="#B3FFFFFF" /></Pen.Brush></Pen></GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing Geometry="M1420,260 L1180,0 L980,120 L1250,330 Z">
+          <GeometryDrawing.Brush>
+            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1"><GradientStop Color="#CC2A2E35" Offset="0" /><GradientStop Color="#CC2A2E35" Offset="0.35" /><GradientStop Color="#FF050607" Offset="1" /></LinearGradientBrush>
+          </GeometryDrawing.Brush>
+          <GeometryDrawing.Pen><Pen Thickness="1.5"><Pen.Brush><SolidColorBrush Color="#B3FFFFFF" /></Pen.Brush></Pen></GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing Geometry="M1360,300 L1600,420 L1600,700 L1300,520 Z">
+          <GeometryDrawing.Brush>
+            <LinearGradientBrush StartPoint="1,0" EndPoint="0,1"><GradientStop Color="#F2FFFFFF" Offset="0" /><GradientStop Color="#66FFFFFF" Offset="0.35" /><GradientStop Color="#00FFFFFF" Offset="1" /></LinearGradientBrush>
+          </GeometryDrawing.Brush>
+          <GeometryDrawing.Pen><Pen Thickness="1.5"><Pen.Brush><SolidColorBrush Color="#B3FFFFFF" /></Pen.Brush></Pen></GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing Geometry="M1250,330 L1420,260 L1300,520 L1120,480 Z">
+          <GeometryDrawing.Brush>
+            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1"><GradientStop Color="#F2FFFFFF" Offset="0" /><GradientStop Color="#66FFFFFF" Offset="0.35" /><GradientStop Color="#00FFFFFF" Offset="1" /></LinearGradientBrush>
+          </GeometryDrawing.Brush>
+          <GeometryDrawing.Pen><Pen Thickness="1.5"><Pen.Brush><SolidColorBrush Color="#B3FFFFFF" /></Pen.Brush></Pen></GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing Geometry="M980,120 L1250,330 L1120,480 L860,300 Z">
+          <GeometryDrawing.Brush>
+            <LinearGradientBrush StartPoint="1,0" EndPoint="0,1"><GradientStop Color="#CC2A2E35" Offset="0" /><GradientStop Color="#CC2A2E35" Offset="0.35" /><GradientStop Color="#FF050607" Offset="1" /></LinearGradientBrush>
+          </GeometryDrawing.Brush>
+          <GeometryDrawing.Pen><Pen Thickness="1.5"><Pen.Brush><SolidColorBrush Color="#B3FFFFFF" /></Pen.Brush></Pen></GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing Geometry="M1120,480 L1300,520 L1230,760 L1020,660 Z">
+          <GeometryDrawing.Brush>
+            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1"><GradientStop Color="#CC2A2E35" Offset="0" /><GradientStop Color="#CC2A2E35" Offset="0.35" /><GradientStop Color="#FF050607" Offset="1" /></LinearGradientBrush>
+          </GeometryDrawing.Brush>
+          <GeometryDrawing.Pen><Pen Thickness="1.5"><Pen.Brush><SolidColorBrush Color="#B3FFFFFF" /></Pen.Brush></Pen></GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing Geometry="M1300,520 L1600,700 L1600,1000 L1380,1000 L1230,760 Z">
+          <GeometryDrawing.Brush>
+            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1"><GradientStop Color="#F2FFFFFF" Offset="0" /><GradientStop Color="#66FFFFFF" Offset="0.35" /><GradientStop Color="#00FFFFFF" Offset="1" /></LinearGradientBrush>
+          </GeometryDrawing.Brush>
+          <GeometryDrawing.Pen><Pen Thickness="1.5"><Pen.Brush><SolidColorBrush Color="#B3FFFFFF" /></Pen.Brush></Pen></GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing Geometry="M860,300 L1120,480 L1020,660 L760,520 Z">
+          <GeometryDrawing.Brush>
+            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1"><GradientStop Color="#F2FFFFFF" Offset="0" /><GradientStop Color="#66FFFFFF" Offset="0.35" /><GradientStop Color="#00FFFFFF" Offset="1" /></LinearGradientBrush>
+          </GeometryDrawing.Brush>
+          <GeometryDrawing.Pen><Pen Thickness="1.5"><Pen.Brush><SolidColorBrush Color="#B3FFFFFF" /></Pen.Brush></Pen></GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing Geometry="M1020,660 L1230,760 L1380,1000 L1080,1000 Z">
+          <GeometryDrawing.Brush>
+            <LinearGradientBrush StartPoint="1,0" EndPoint="0,1"><GradientStop Color="#CC2A2E35" Offset="0" /><GradientStop Color="#CC2A2E35" Offset="0.35" /><GradientStop Color="#FF050607" Offset="1" /></LinearGradientBrush>
+          </GeometryDrawing.Brush>
+          <GeometryDrawing.Pen><Pen Thickness="1.5"><Pen.Brush><SolidColorBrush Color="#B3FFFFFF" /></Pen.Brush></Pen></GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing Geometry="M760,520 L1020,660 L1080,1000 L820,1000 L700,740 Z">
+          <GeometryDrawing.Brush>
+            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1"><GradientStop Color="#CC2A2E35" Offset="0" /><GradientStop Color="#CC2A2E35" Offset="0.35" /><GradientStop Color="#FF050607" Offset="1" /></LinearGradientBrush>
+          </GeometryDrawing.Brush>
+          <GeometryDrawing.Pen><Pen Thickness="1.5"><Pen.Brush><SolidColorBrush Color="#B3FFFFFF" /></Pen.Brush></Pen></GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing Geometry="M0,1000 L0,820 L260,880 L360,1000 Z">
+          <GeometryDrawing.Brush>
+            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0"><GradientStop Color="#CC2A2E35" Offset="0" /><GradientStop Color="#CC2A2E35" Offset="0.35" /><GradientStop Color="#FF050607" Offset="1" /></LinearGradientBrush>
+          </GeometryDrawing.Brush>
+          <GeometryDrawing.Pen><Pen Thickness="1.5"><Pen.Brush><SolidColorBrush Color="#B3FFFFFF" /></Pen.Brush></Pen></GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing Geometry="M260,880 L0,820 L0,700 L340,760 L420,860 Z">
+          <GeometryDrawing.Brush>
+            <LinearGradientBrush StartPoint="0,1" EndPoint="1,0"><GradientStop Color="#F2FFFFFF" Offset="0" /><GradientStop Color="#66FFFFFF" Offset="0.35" /><GradientStop Color="#00FFFFFF" Offset="1" /></LinearGradientBrush>
+          </GeometryDrawing.Brush>
+          <GeometryDrawing.Pen><Pen Thickness="1.5"><Pen.Brush><SolidColorBrush Color="#B3FFFFFF" /></Pen.Brush></Pen></GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+          <GeometryDrawing.Geometry><EllipseGeometry Center="1250,420" RadiusX="520" RadiusY="380" /></GeometryDrawing.Geometry>
+          <GeometryDrawing.Brush>
+            <RadialGradientBrush><GradientStop Color="#59FF2E2E" Offset="0" /><GradientStop Color="#00FF2E2E" Offset="1" /></RadialGradientBrush>
+          </GeometryDrawing.Brush>
+        </GeometryDrawing>
+        <GeometryDrawing Geometry="M1600,420 L1360,300 L860,300 L866,308 L1356,308 Z">
+          <GeometryDrawing.Brush>
+            <LinearGradientBrush StartPoint="1,0" EndPoint="0,0"><GradientStop Color="#E6FF2E2E" Offset="0" /><GradientStop Color="#00FF2E2E" Offset="1" /></LinearGradientBrush>
+          </GeometryDrawing.Brush>
+        </GeometryDrawing>
+        <GeometryDrawing Geometry="M760,520 L1020,660 L1024,654 L764,514 Z">
+          <GeometryDrawing.Brush><SolidColorBrush Color="#E6FF2E2E" /></GeometryDrawing.Brush>
+        </GeometryDrawing>
+        <GeometryDrawing Geometry="M0,0 H1600 V1000 H0 Z" Brush="{StaticResource BrushedGrain}" />
+      </DrawingGroup>
+    </DrawingBrush.Drawing>
+  </DrawingBrush>
+
+  <!-- Surfaces: gunmetal, slightly see-through so the shards ghost through the plates. -->
+  <LinearGradientBrush x:Key="PanelBg" StartPoint="0,0" EndPoint="0,1">
+    <GradientStop Color="#E0363B43" Offset="0" />
+    <GradientStop Color="#E61C1F24" Offset="1" />
+  </LinearGradientBrush>
+  <SolidColorBrush x:Key="PanelBorder" Color="#7A818A" />
+  <SolidColorBrush x:Key="RaisedBg" Color="#3F454E" />
+  <SolidColorBrush x:Key="RowHover" Color="#4F5660" />
+  <SolidColorBrush x:Key="SlideOverBg" Color="#24282E" />
+  <LinearGradientBrush x:Key="TopBarBg" StartPoint="0,0" EndPoint="0,1">
+    <GradientStop Color="#6B737D" Offset="0" />
+    <GradientStop Color="#3A3F46" Offset="0.5" />
+    <GradientStop Color="#1E2126" Offset="1" />
+  </LinearGradientBrush>
+  <SolidColorBrush x:Key="Scrim" Color="#BF000000" />
+
+  <!-- Ink -->
+  <SolidColorBrush x:Key="TextPrimary" Color="#EEF1F5" />
+  <SolidColorBrush x:Key="TextSecondary" Color="#B4BCC6" />
+  <SolidColorBrush x:Key="TextMuted" Color="#858E98" />
+
+  <!-- Status colours. The Soft ones fill banners and the status field. -->
+  <SolidColorBrush x:Key="GoodBrush" Color="#41D15F" />
+  <SolidColorBrush x:Key="WarnBrush" Color="#FFC53D" />
+  <SolidColorBrush x:Key="BadBrush" Color="#FF4D4D" />
+  <SolidColorBrush x:Key="IdleBrush" Color="#5A626C" />
+  <SolidColorBrush x:Key="GoodSoft" Color="#233A12" />
+  <SolidColorBrush x:Key="WarnSoft" Color="#3A2E0E" />
+  <SolidColorBrush x:Key="BadSoft" Color="#421616" />
+  <SolidColorBrush x:Key="IdleSoft" Color="#24282E" />
+
+  <!-- The primary action: red chrome. -->
+  <LinearGradientBrush x:Key="AccentBrush" StartPoint="0,0" EndPoint="0,1">
+    <GradientStop Color="#FF6464" Offset="0" />
+    <GradientStop Color="#D21818" Offset="0.5" />
+    <GradientStop Color="#860A0A" Offset="1" />
+  </LinearGradientBrush>
+  <SolidColorBrush x:Key="AccentText" Color="#FFFFFF" />
+  <SolidColorBrush x:Key="MonoBg" Color="#0F1114" />
+
+  <FontFamily x:Key="TextFont">pack://application:,,,/Assets/Fonts/#Figtree</FontFamily>
+  <FontFamily x:Key="DisplayFont">pack://application:,,,/Assets/Fonts/#Orbitron</FontFamily>
+  <FontFamily x:Key="ContentControlThemeFontFamily">pack://application:,,,/Assets/Fonts/#Figtree</FontFamily>
+</ResourceDictionary>
