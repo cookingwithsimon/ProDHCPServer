@@ -788,16 +788,19 @@
                             <StackPanel DataContext="{Binding DataContext.Update, RelativeSource={RelativeSource AncestorType=Window}}">
                                 <TextBlock Text="Updates" FontFamily="{DynamicResource DisplayFont}" FontSize="{StaticResource TextBody}" FontWeight="Bold"
                                            Foreground="{DynamicResource TextPrimary}" Margin="0,32,0,8" />
-                                <CheckBox IsChecked="{Binding CheckOnStart}">
-                                    <TextBlock Text="Check for a new version when ProDHCPServer starts" FontSize="{StaticResource TextBody}" Style="{StaticResource Primary}" TextWrapping="Wrap" />
-                                </CheckBox>
-                                <TextBlock Text="Needs internet. On an isolated AV network the check just doesn't happen; nothing else is affected." Style="{StaticResource FieldHelp}" />
+                                <!-- A Microsoft Store copy is updated by the Store, so only the status line shows. -->
+                                <StackPanel Visibility="{Binding FromStore, Converter={StaticResource VisibleWhen}, ConverterParameter=Invert}">
+                                    <CheckBox IsChecked="{Binding CheckOnStart}">
+                                        <TextBlock Text="Check for a new version when ProDHCPServer starts" FontSize="{StaticResource TextBody}" Style="{StaticResource Primary}" TextWrapping="Wrap" />
+                                    </CheckBox>
+                                    <TextBlock Text="Needs internet. On an isolated AV network the check just doesn't happen; nothing else is affected." Style="{StaticResource FieldHelp}" />
+                                </StackPanel>
                                 <TextBlock Text="{Binding Status}" FontSize="{StaticResource TextBody}" Style="{StaticResource Primary}" TextWrapping="Wrap" Margin="0,16,0,0"
                                            AutomationProperties.LiveSetting="Polite" />
                                 <ProgressBar Value="{Binding Progress}" Maximum="100" Height="4" Margin="0,8,0,0"
                                              Visibility="{Binding IsInstalling, Converter={StaticResource VisibleWhen}}" />
                                 <TextBlock Text="{Binding InstallHint}" Style="{StaticResource FieldHelp}" Visibility="{Binding InstallHint, Converter={StaticResource VisibleWhen}}" />
-                                <WrapPanel Margin="0,12,0,0">
+                                <WrapPanel Margin="0,12,0,0" Visibility="{Binding FromStore, Converter={StaticResource VisibleWhen}, ConverterParameter=Invert}">
                                     <Button Content="Check now" Style="{DynamicResource SecondaryButton}" Margin="0,0,8,8" Command="{Binding CheckNowCommand}" />
                                     <Button Content="Install and restart" Style="{DynamicResource AccentButton}" Margin="0,0,8,8" Command="{Binding InstallCommand}"
                                             Visibility="{Binding Available, Converter={StaticResource VisibleWhen}}" />
