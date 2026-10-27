@@ -144,6 +144,35 @@
 
             <!-- ===== Banners ===== -->
             <StackPanel Grid.Row="2">
+                <!-- A newer release is on GitHub -->
+                <Border Style="{DynamicResource Banner}" Background="{DynamicResource GoodSoft}" DataContext="{Binding Update}"
+                        Visibility="{Binding BannerText, Converter={StaticResource VisibleWhen}}">
+                    <StackPanel>
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <Ellipse Width="16" Height="16" Fill="{DynamicResource GoodBrush}" VerticalAlignment="Center" Margin="0,0,16,0" />
+                            <TextBlock Grid.Column="1" Text="{Binding BannerText}" FontSize="{StaticResource TextBody}" Style="{StaticResource Primary}" VerticalAlignment="Center"
+                                       TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite" />
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="24,0,0,0" VerticalAlignment="Center">
+                                <Button Content="Install and restart" Style="{DynamicResource AccentButton}" Command="{Binding InstallCommand}"
+                                        ToolTip="Downloads the new version from GitHub, checks it, and restarts ProDHCPServer" />
+                                <Button Content="What's new" Style="{DynamicResource SecondaryButton}" Margin="8,0,0,0" Command="{Binding OpenReleaseCommand}"
+                                        ToolTip="Opens the release page on GitHub" />
+                                <Button Content="Not now" Style="{DynamicResource SecondaryButton}" Margin="8,0,0,0" Command="{Binding NotNowCommand}" />
+                                <Button Content="Skip this version" Style="{DynamicResource SecondaryButton}" Margin="8,0,0,0" Command="{Binding SkipCommand}" />
+                            </StackPanel>
+                        </Grid>
+                        <TextBlock Text="{Binding InstallHint}" Margin="32,8,0,0" FontSize="{StaticResource TextSmall}" Foreground="{DynamicResource TextSecondary}" TextWrapping="Wrap"
+                                   Visibility="{Binding InstallHint, Converter={StaticResource VisibleWhen}}" />
+                        <StackPanel Margin="32,8,0,0" Visibility="{Binding IsInstalling, Converter={StaticResource VisibleWhen}}">
+                            <TextBlock Text="{Binding Status}" FontSize="{StaticResource TextSmall}" Foreground="{DynamicResource TextSecondary}" AutomationProperties.LiveSetting="Polite" />
+                            <ProgressBar Value="{Binding Progress}" Maximum="100" Height="4" Margin="0,4,0,0" />
+                        </StackPanel>
+                        <TextBlock Text="{Binding InstallError}" Margin="32,8,0,0" FontSize="{StaticResource TextBody}" Style="{StaticResource Primary}" TextWrapping="Wrap"
+                                   Visibility="{Binding InstallError, Converter={StaticResource VisibleWhen}}" AutomationProperties.LiveSetting="Polite" />
+                    </StackPanel>
+                </Border>
+
                 <!-- Crash recovery -->
                 <Border Style="{DynamicResource Banner}" Background="{DynamicResource WarnSoft}"
                         Visibility="{Binding PendingRecovery, Converter={StaticResource VisibleWhen}}">
@@ -754,6 +783,28 @@
                             <Label Content="Dark or l_ight" Target="{Binding ElementName=ThemeBox}" Style="{StaticResource FieldLabel}" />
                             <ComboBox x:Name="ThemeBox" ItemsSource="{x:Static vm:SettingsViewModel.Themes}" SelectedItem="{Binding Theme}" FontSize="{StaticResource TextBody}" HorizontalAlignment="Stretch" />
                             <TextBlock Text="System follows Windows. Both apply straight away, for every profile." Style="{StaticResource FieldHelp}" />
+
+                            <!-- Updates: checked against the latest GitHub release -->
+                            <StackPanel DataContext="{Binding DataContext.Update, RelativeSource={RelativeSource AncestorType=Window}}">
+                                <TextBlock Text="Updates" FontFamily="{DynamicResource DisplayFont}" FontSize="{StaticResource TextBody}" FontWeight="Bold"
+                                           Foreground="{DynamicResource TextPrimary}" Margin="0,32,0,8" />
+                                <CheckBox IsChecked="{Binding CheckOnStart}">
+                                    <TextBlock Text="Check for a new version when ProDHCPServer starts" FontSize="{StaticResource TextBody}" Style="{StaticResource Primary}" TextWrapping="Wrap" />
+                                </CheckBox>
+                                <TextBlock Text="Needs internet. On an isolated AV network the check just doesn't happen; nothing else is affected." Style="{StaticResource FieldHelp}" />
+                                <TextBlock Text="{Binding Status}" FontSize="{StaticResource TextBody}" Style="{StaticResource Primary}" TextWrapping="Wrap" Margin="0,16,0,0"
+                                           AutomationProperties.LiveSetting="Polite" />
+                                <ProgressBar Value="{Binding Progress}" Maximum="100" Height="4" Margin="0,8,0,0"
+                                             Visibility="{Binding IsInstalling, Converter={StaticResource VisibleWhen}}" />
+                                <TextBlock Text="{Binding InstallHint}" Style="{StaticResource FieldHelp}" Visibility="{Binding InstallHint, Converter={StaticResource VisibleWhen}}" />
+                                <WrapPanel Margin="0,12,0,0">
+                                    <Button Content="Check now" Style="{DynamicResource SecondaryButton}" Margin="0,0,8,8" Command="{Binding CheckNowCommand}" />
+                                    <Button Content="Install and restart" Style="{DynamicResource AccentButton}" Margin="0,0,8,8" Command="{Binding InstallCommand}"
+                                            Visibility="{Binding Available, Converter={StaticResource VisibleWhen}}" />
+                                    <Button Content="Release page" Style="{DynamicResource SecondaryButton}" Margin="0,0,8,8" Command="{Binding OpenReleaseCommand}"
+                                            Visibility="{Binding Available, Converter={StaticResource VisibleWhen}}" />
+                                </WrapPanel>
+                            </StackPanel>
                         </StackPanel>
                     </ScrollViewer>
                 </DockPanel>

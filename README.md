@@ -59,6 +59,12 @@ Most AV kit ships set to DHCP, and on a bench or a fresh site there's usually no
 2. Double-click it. Windows asks for administrator rights, because changing adapter settings and serving DHCP require them.
 3. The exe isn't code-signed yet, so the first time Windows SmartScreen says "Windows protected your PC". Click **More info**, then **Run anyway**.
 
+### Updates
+
+When the laptop has internet, ProDHCPServer checks GitHub for a newer release a few seconds after it starts. If there is one, a green banner offers **Install and restart**: it downloads the new exe, checks it against the SHA-256 published with the release, swaps it in place of the old one and restarts. The server has to be stopped first. Nothing is changed if any step fails, and the previous exe is deleted the next time the app starts.
+
+On an isolated AV network the check simply doesn't happen. Turn the start-up check off, or check by hand, under Settings > Updates. On a work laptop that only runs approved programs, Windows may block the new version from starting; the app then puts the old one back and says so.
+
 ## Using it
 
 1. Connect the device to your laptop's Ethernet port (directly or through a small switch) and power it on.
@@ -104,9 +110,10 @@ Each phase ends with a hardware test pass on real AV equipment before the next o
 
 | What | Where |
 |---|---|
-| Your settings (last adapter, profile in use, look and theme) | `%LOCALAPPDATA%\ProDHCPServer\settings.json` |
+| Your settings (last adapter, profile in use, look and theme, update check) | `%LOCALAPPDATA%\ProDHCPServer\settings.json` |
 | Your profiles | `%LOCALAPPDATA%\ProDHCPServer\profiles.json` |
 | Adapter backup (only while a session runs, or after a crash) | `%ProgramData%\ProDHCPServer\adapter-backup.json` |
+| The previous version, for a moment after an update | `ProDHCPServer.exe.old` next to the exe, deleted on the next start |
 
 While serving, the app also adds two Windows Firewall rules for this exe only: one so it can receive DHCP traffic (UDP 67 and 68), and one on wired adapters so it can hear devices announcing themselves (mDNS, UPnP, vendor discovery). Both are removed on Stop.
 

@@ -42,7 +42,10 @@ public partial class App : Application
             return;
         }
 
-        _singleInstance = new Mutex(true, @"Global\ProDHCPServer.SingleInstance", out bool first);
+        _singleInstance = new Mutex(true, SingleInstanceName, out bool first);
+        // Started by an update: the previous version is still closing, so give it time to let go.
+        bool updated = e.Args.Contains(UpdateViewModel.UpdatedFlag);
+        if (!first && updated) first = WaitForPreviousVersion(_singleInstance);
         if (!first)
         {
             MessageBox.Show("ProDHCPServer is already running. Two copies would fight over the adapter, so this one will close.",
@@ -52,7 +55,9 @@ public partial class App : Application
         }
 
         _log = new SessionLog();
-        _log.Add(LogSeverity.Info, LogCategory.App, $"ProDHCPServer {Version} started (administrator).");
+        _log.Add(LogSeverity.Info, LogCategory.App, updated
+            ? $"ProDHCPServer {Version} started (administrator) after updating."
+            : $"ProDHCPServer {Version} started (administrator).");
         var adapters = new WindowsAdapterControl();
         var sessions = new AdapterSessionManager(adapters, new FileSessionStore(Path.Combine(DataFolder, "adapter-backup.json")));
         _controller = new ServerController(adapters, sessions, _log, Version);
@@ -76,6 +81,27 @@ public partial class App : Application
         window.Closed += (_, _) => Shutdown();
         MainWindow = window;
         window.Show();
+    }
+
+    private const string SingleInstanceName = @"Global\ProDHCPServer.SingleInstance";
+
+    /// <summary>
+    /// Lets go of the one-copy lock just before an update starts the new version, so it can start even if
+    /// it's an older build without <see cref="WaitForPreviousVersion"/>. <see cref="RetakeSingleInstance"/> undoes it.
+    /// </summary>
+    public void ReleaseSingleInstance()
+    {
+        _singleInstance?.ReleaseMutex();
+        _singleInstance?.Dispose();
+        _singleInstance = null;
+    }
+
+    public void RetakeSingleInstance() => _singleInstance ??= new Mutex(true, SingleInstanceName, out _);
+
+    private static bool WaitForPreviousVersion(Mutex mutex)
+    {
+        try { return mutex.WaitOne(TimeSpan.FromSeconds(30)); }
+        catch (AbandonedMutexException) { return true; } // it exited without releasing: the mutex is ours now
     }
 
     private void OnUiException(object sender, DispatcherUnhandledExceptionEventArgs e)
