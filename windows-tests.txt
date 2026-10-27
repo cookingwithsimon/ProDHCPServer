@@ -1,0 +1,28 @@
+Passed   00:00:00.0079274 ProDHCPServer.Windows.Tests.WindowsIntegrationTests.Ping_and_port_probe_work_against_localhost
+Passed   00:00:03.5356895 ProDHCPServer.Windows.Tests.WindowsIntegrationTests.Device_monitor_pings_once_a_second_and_logs_nothing_while_answering
+Passed   00:00:00.0306314 ProDHCPServer.Windows.Tests.WindowsIntegrationTests.Port_owner_lookup_names_a_process
+Passed   00:00:00.0504829 ProDHCPServer.Windows.Tests.WindowsIntegrationTests.Server_socket_receives_and_answers_on_the_real_stack
+Passed   00:00:01.4045585 ProDHCPServer.Windows.Tests.WindowsIntegrationTests.Firewall_rule_can_be_added_and_removed
+Passed   00:00:00.1937342 ProDHCPServer.Windows.Tests.WindowsIntegrationTests.Neighbor_entry_struct_layout_is_accepted_by_windows
+Passed   00:00:00.0665206 ProDHCPServer.Windows.Tests.WindowsIntegrationTests.Discovery_socket_and_raw_sniffer_receive_a_pjlink_reply
+Passed   00:00:00.0678870 ProDHCPServer.Windows.Tests.WindowsIntegrationTests.Arp_table_reads_and_resolves_the_gateway
+Passed   00:00:00.0804214 ProDHCPServer.Windows.Tests.WindowsIntegrationTests.Captures_persisted_settings_from_registry
+Passed   00:00:00.2536246 ProDHCPServer.Windows.Tests.WindowsIntegrationTests.Server_socket_receives_a_broadcast_discover
+Passed   00:00:00.0015992 ProDHCPServer.Windows.Tests.WindowsIntegrationTests.Npcap_check_never_throws
+Passed   00:00:00.1063913 ProDHCPServer.Windows.Tests.WindowsIntegrationTests.Lists_adapters_with_index_link_and_addresses
+--- ProDHCPServer.Windows.Tests.WindowsIntegrationTests.Device_monitor_pings_once_a_second_and_logs_nothing_while_answering
+True/0, True/0, True/0, True/0
+--- ProDHCPServer.Windows.Tests.WindowsIntegrationTests.Server_socket_receives_and_answers_on_the_real_stack
+INFORM answered on Ethernet 4 (index 15) 10.1.0.103/20: ACK to 02:00:5E:AA:BB:CC xid 0x00C0FFEE ciaddr 10.1.0.103 server 10.1.0.103
+--- ProDHCPServer.Windows.Tests.WindowsIntegrationTests.Discovery_socket_and_raw_sniffer_receive_a_pjlink_reply
+Sniffer: listening
+Sniffer saw it: True
+--- ProDHCPServer.Windows.Tests.WindowsIntegrationTests.Arp_table_reads_and_resolves_the_gateway
+Gateway 10.1.0.1 is at 12:34:56:78:9A:BC
+10.1.0.1 12:34:56:78:9A:BC
+--- ProDHCPServer.Windows.Tests.WindowsIntegrationTests.Server_socket_receives_a_broadcast_discover
+Broadcast DISCOVER received on Ethernet 4 (index 15) 10.1.0.103/20.
+--- ProDHCPServer.Windows.Tests.WindowsIntegrationTests.Npcap_check_never_throws
+Npcap installed: False
+--- ProDHCPServer.Windows.Tests.WindowsIntegrationTests.Lists_adapters_with_index_link_and_addresses
+Ethernet 4: Microsoft Hyper-V Network Adapter #4, driver Microsoft 10.0.26100.33648 2006-06-21 [VMBUS\{f8615163-df3e-46c5-913f-f2d2f965ed0e}], rx 382187040 tx 4004942
