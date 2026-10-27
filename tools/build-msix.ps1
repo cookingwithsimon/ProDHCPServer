@@ -18,7 +18,7 @@ if ($Version -notmatch '^\d+\.\d+\.\d+$') { throw "Version '$Version' must look 
 
 $sdkBin = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin\10.*\x64" -Directory |
     Where-Object { Test-Path (Join-Path $_.FullName "makeappx.exe") } |
-    Sort-Object { [version]$_.Name } | Select-Object -Last 1
+    Sort-Object { [version]$_.Parent.Name } | Select-Object -Last 1
 if (-not $sdkBin) { throw "Can't find MakeAppx.exe. Install the Windows 10/11 SDK." }
 $makeAppx = Join-Path $sdkBin.FullName "makeappx.exe"
 $signTool = Join-Path $sdkBin.FullName "signtool.exe"
