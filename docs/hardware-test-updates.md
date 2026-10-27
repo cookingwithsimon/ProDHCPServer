@@ -2,7 +2,7 @@
 
 About 15 minutes on the unmanaged laptop, with internet. No AV devices needed.
 
-The updater can only update to a release that's already published on GitHub, so this test updates a test build to the newest published release (v1.1.0). v1.1.0 doesn't have the updater itself, so after the update they leave `ProDHCPServer.exe.old` behind; delete it by hand at the end.
+The updater can only update to a release that's already published on GitHub, so this test updates a test build to the newest published release (v1.1.0). v1.1.0 doesn't have the updater itself, so after the update it leaves `ProDHCPServer.exe.old` behind; delete it by hand at the end.
 
 Download `ProDHCPServer.exe` from this PR's latest **Build and test** run (Actions tab → run → Artifacts → `ProDHCPServer-win-x64`) and put it in a folder of its own, for example `C:\Tools\ProDHCPServer\`. Click **More info → Run anyway** on the SmartScreen warning.
 
