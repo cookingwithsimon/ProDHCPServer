@@ -25,7 +25,7 @@ public static class Theme
     [
         new("Faceplate", "Rack faceplate", "The default: a flat front panel, one status light at every scale."),
         new("FrutigerAero", "Frutiger Aero", "Glass widgets and orb lights over a sky full of bubbles, 2000s desktop style."),
-        new("MetalHeart", "Metal Heart", "Riveted steel plates, chrome bevels and an acid-green button, Winamp skin style."),
+        new("MetalHeart", "Metal Heart", "Riveted steel plates over shattered chrome, black and white with a red accent."),
     ];
 
     public static Look DefaultLook => Looks[0];
