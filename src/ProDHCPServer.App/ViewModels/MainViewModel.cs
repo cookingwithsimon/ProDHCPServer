@@ -67,6 +67,11 @@ public sealed partial class MainViewModel : ObservableObject, IAsyncDisposable
             SaveSettings();
             ApplyTheme();
         };
+        Update = new UpdateViewModel(App.Version, log, () => _settings, updated =>
+        {
+            _settings = updated;
+            SaveSettings();
+        }, OpenUrl);
         Steps = new ObservableCollection<StepViewModel>(Enum.GetValues<StepId>().Select(id => new StepViewModel(id)));
 
         RebuildLog();
@@ -89,10 +94,12 @@ public sealed partial class MainViewModel : ObservableObject, IAsyncDisposable
         _timer.Tick += async (_, _) => await RefreshAsync();
         _timer.Start();
         _ = RefreshAsync();
+        _ = Update.CheckOnStartupAsync();
     }
 
     public SessionLog Log { get; }
     public SettingsViewModel Settings { get; }
+    public UpdateViewModel Update { get; }
     public ObservableCollection<AdapterItemViewModel> Adapters { get; } = [];
     public ObservableCollection<StepViewModel> Steps { get; }
     public ObservableCollection<DeviceViewModel> Devices { get; } = [];
@@ -124,6 +131,7 @@ public sealed partial class MainViewModel : ObservableObject, IAsyncDisposable
     partial void OnIsRunningChanged(bool value)
     {
         Settings.IsLocked = value;
+        Update.ServerRunning = value;
         SweepCommand.NotifyCanExecuteChanged();
     }
 

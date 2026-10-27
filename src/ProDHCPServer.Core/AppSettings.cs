@@ -23,6 +23,10 @@ public sealed record AppSettings
     public string Theme { get; init; } = "System";
     /// <summary>Which look the window uses (a name from the App's theme list); unknown values fall back to the default.</summary>
     public string Look { get; init; } = "Faceplate";
+    /// <summary>Look for a newer release on GitHub when the app starts.</summary>
+    public bool CheckForUpdates { get; init; } = true;
+    /// <summary>A release version the user chose to skip ("1.2.0"); the start-up check won't mention it again.</summary>
+    public string? SkippedUpdate { get; init; }
 }
 
 public sealed class SettingsStore(string path)
