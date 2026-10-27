@@ -54,7 +54,8 @@ public sealed partial class UpdateViewModel : ObservableObject
 
     /// <summary>The single-file exe this process runs from, or null when running from a build folder (updates can't swap that).</summary>
     private static string? ExePath =>
-        string.IsNullOrEmpty(typeof(App).Assembly.Location) && Environment.ProcessPath is { } p ? p : null;
+        // A build folder has ProDHCPServer.dll beside the exe; the published single file doesn't.
+        Environment.ProcessPath is { } p && !File.Exists(Path.ChangeExtension(p, ".dll")) ? p : null;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(Busy))]
