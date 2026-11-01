@@ -14,9 +14,9 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v6
         with:
           global-json-file: global.json
 
@@ -54,7 +54,7 @@ jobs:
         shell: pwsh
         run: tools/smoke-test.ps1 -Exe publish/ProDHCPServer.exe -OutDir screenshots
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: ProDHCPServer-win-x64
           path: publish/ProDHCPServer.exe
@@ -75,14 +75,14 @@ jobs:
           git -C $dir -c user.name="github-actions" -c user.email="github-actions@users.noreply.github.com" commit -q -m "CI screenshots for run ${{ github.run_id }}"
           git -C $dir push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" ci-screenshots
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: screenshots
           path: screenshots/
           if-no-files-found: ignore
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: test-results
