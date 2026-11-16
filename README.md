@@ -138,9 +138,10 @@ dotnet publish src/ProDHCPServer.App -c Release -r win-x64 -o publish
 | `src/ProDHCPServer.App` | The WPF app: UI, elevation prompt, crash handling. |
 | `tests/` | Core unit tests (run anywhere) and Windows integration tests (run on the Windows CI runner and never change adapter settings). |
 | `docs/` | Hardware test checklists for each phase, the sources for the discovery protocols (`vendor-discovery.md`), and the screenshots used in this README (taken by the CI smoke test). |
-| `tools/` | CI smoke test (launches the app and takes screenshots) and the manufacturer list updater (`python3 tools/update-oui.py`). |
+| `tools/` | CI smoke tests (launch the exe and the MSIX package and take screenshots), the MSIX packager (`build-msix.ps1`) and the manufacturer list updater (`python3 tools/update-oui.py`). |
+| `packaging/msix/` | The Microsoft Store package manifest and tile images. See [docs/microsoft-store.md](docs/microsoft-store.md). |
 
-**CI.** Every push and pull request runs the **Build and test** workflow on Windows: build, Core and Windows tests, publish the exe, and a smoke test that screenshots the app in light and dark mode. The exe and screenshots are uploaded as run artifacts, so you can try a build from any branch before it's released.
+**CI.** Every push and pull request runs the **Build and test** workflow on Windows: build, Core and Windows tests, publish the exe, and a smoke test that screenshots the app in light and dark mode. It also builds a test-signed MSIX, installs it on the runner and starts it. The exe, the test MSIX and the screenshots are uploaded as run artifacts, so you can try a build from any branch before it's released.
 
 **Contributing.** Work happens on branches with pull requests into `main`. See [CLAUDE.md](CLAUDE.md) for the project rules (they apply to people too), and use the PR template's checklist. Formatting follows `.editorconfig`; check it with `dotnet format whitespace ProDHCPServer.sln --verify-no-changes`.
 

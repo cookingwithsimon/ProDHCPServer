@@ -68,6 +68,21 @@ jobs:
           Set-Content -NoNewline -Encoding ascii "dist/$name.sha256" "$hash  $name`n"
           Get-ChildItem dist
 
+      # The Store package to upload in Partner Center. It stays unsigned: the Store signs it. Its identity comes from
+      # the repository variables STORE_IDENTITY_NAME, STORE_PUBLISHER and STORE_PUBLISHER_DISPLAY_NAME
+      # (Settings > Secrets and variables > Actions > Variables), copied from Partner Center > Product identity.
+      - name: Build the Microsoft Store package
+        if: vars.STORE_IDENTITY_NAME != ''
+        shell: pwsh
+        env:
+          STORE_IDENTITY_NAME: ${{ vars.STORE_IDENTITY_NAME }}
+          STORE_PUBLISHER: ${{ vars.STORE_PUBLISHER }}
+          STORE_PUBLISHER_DISPLAY_NAME: ${{ vars.STORE_PUBLISHER_DISPLAY_NAME }}
+        run: >
+          tools/build-msix.ps1 -Exe publish/ProDHCPServer.exe -Version ${{ steps.version.outputs.version }}
+          -OutFile "store/ProDHCPServer-$($env:TAG)-x64.msix"
+          -IdentityName $env:STORE_IDENTITY_NAME -Publisher $env:STORE_PUBLISHER -PublisherDisplayName $env:STORE_PUBLISHER_DISPLAY_NAME
+
       - name: Create or update the draft release
         shell: pwsh
         env:
@@ -89,5 +104,6 @@ jobs:
           name: release-${{ env.TAG }}
           path: |
             dist/
+            store/
             screenshots/
           if-no-files-found: ignore

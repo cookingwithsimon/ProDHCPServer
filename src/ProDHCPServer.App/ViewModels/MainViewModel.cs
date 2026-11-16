@@ -67,7 +67,7 @@ public sealed partial class MainViewModel : ObservableObject, IAsyncDisposable
             SaveSettings();
             ApplyTheme();
         };
-        Update = new UpdateViewModel(App.Version, log, () => _settings, updated =>
+        Update = new UpdateViewModel(App.Version, AppPackage.IsPackaged, log, () => _settings, updated =>
         {
             _settings = updated;
             SaveSettings();

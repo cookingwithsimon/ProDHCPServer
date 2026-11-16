@@ -60,6 +60,21 @@ jobs:
           path: publish/ProDHCPServer.exe
           if-no-files-found: error
 
+      # A test-signed MSIX (placeholder identity) proves the Store package builds, installs and starts.
+      - name: Build test-signed MSIX
+        shell: pwsh
+        run: tools/build-msix.ps1 -Exe publish/ProDHCPServer.exe -Version "0.1.${{ github.run_number }}" -OutFile msix/ProDHCPServer-test.msix -TestSign
+
+      - name: MSIX smoke test (install, start with settings open, uninstall)
+        shell: pwsh
+        run: tools/msix-smoke-test.ps1 -Package msix/ProDHCPServer-test.msix -OutDir screenshots
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ProDHCPServer-msix-test
+          path: msix/
+          if-no-files-found: error
+
       # Keep the latest screenshots on a throwaway branch so they can be viewed without downloading artifacts.
       - name: Publish screenshots to the ci-screenshots branch
         if: always() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)

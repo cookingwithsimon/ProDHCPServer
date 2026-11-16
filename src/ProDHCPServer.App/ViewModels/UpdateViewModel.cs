@@ -29,9 +29,10 @@ public sealed partial class UpdateViewModel : ObservableObject
     private readonly Action<string> _openUrl;
     private bool _loading;
 
-    public UpdateViewModel(string currentVersion, SessionLog log, Func<AppSettings> getSettings, Action<AppSettings> saveSettings, Action<string> openUrl)
+    public UpdateViewModel(string currentVersion, bool fromStore, SessionLog log, Func<AppSettings> getSettings, Action<AppSettings> saveSettings, Action<string> openUrl)
     {
         _checker = new UpdateChecker(Http, currentVersion);
+        FromStore = fromStore;
         _log = log;
         _getSettings = getSettings;
         _saveSettings = saveSettings;
@@ -39,9 +40,11 @@ public sealed partial class UpdateViewModel : ObservableObject
         _loading = true;
         CheckOnStart = getSettings().CheckForUpdates;
         _loading = false;
-        Status = AppVersion.IsTestBuild(currentVersion)
-            ? $"This is test build {currentVersion}. It doesn't check for updates by itself; use Check now."
-            : $"You have version {currentVersion}.";
+        Status = fromStore
+            ? $"You have version {currentVersion}. The Microsoft Store installs updates for this copy."
+            : AppVersion.IsTestBuild(currentVersion)
+                ? $"This is test build {currentVersion}. It doesn't check for updates by itself; use Check now."
+                : $"You have version {currentVersion}.";
     }
 
     private static HttpClient CreateClient()
@@ -94,6 +97,9 @@ public sealed partial class UpdateViewModel : ObservableObject
 
     public bool Busy => IsChecking || IsInstalling;
 
+    /// <summary>Installed from the Microsoft Store: the Store updates it, so the app never checks GitHub or swaps its exe.</summary>
+    public bool FromStore { get; }
+
     public string? InstallHint => Available is null ? null
         : ServerRunning ? "Stop the server first: installing restarts ProDHCPServer."
         : !Available.CanInstall || ExePath is null ? "This copy can't update itself. Use Release page to download the new version."
@@ -108,6 +114,7 @@ public sealed partial class UpdateViewModel : ObservableObject
     /// <summary>The start-up check: release builds only, a few seconds after the window opens, and silent unless there is something new.</summary>
     public async Task CheckOnStartupAsync()
     {
+        if (FromStore) return;
         CleanUpAfterUpdate();
         if (!CheckOnStart || AppVersion.IsTestBuild(_checker.CurrentVersion)) return;
         await Task.Delay(TimeSpan.FromSeconds(5));
@@ -117,7 +124,7 @@ public sealed partial class UpdateViewModel : ObservableObject
             BannerText = $"ProDHCPServer {UpdateChecker.Show(latest.Version)} is available. You have {_checker.CurrentVersion}.";
     }
 
-    private bool CanCheck() => !Busy;
+    private bool CanCheck() => !Busy && !FromStore;
 
     [RelayCommand(CanExecute = nameof(CanCheck))]
     private async Task CheckNow()
@@ -144,7 +151,7 @@ public sealed partial class UpdateViewModel : ObservableObject
         finally { IsChecking = false; }
     }
 
-    private bool CanInstall() => !Busy && !ServerRunning && Available is { CanInstall: true } && ExePath is not null;
+    private bool CanInstall() => !Busy && !FromStore && !ServerRunning && Available is { CanInstall: true } && ExePath is not null;
 
     [RelayCommand(CanExecute = nameof(CanInstall))]
     private async Task Install()
