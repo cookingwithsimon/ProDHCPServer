@@ -19,9 +19,20 @@ public partial class MainWindow : Window
         InitializeComponent();
         DataContextChanged += (_, e) =>
         {
-            if (e.OldValue is MainViewModel old) old.PropertyChanged -= OnVmPropertyChanged;
-            if (e.NewValue is MainViewModel vm) vm.PropertyChanged += OnVmPropertyChanged;
+            if (e.OldValue is MainViewModel old)
+            {
+                old.PropertyChanged -= OnVmPropertyChanged;
+                old.Settings.PropertyChanged -= OnSettingsPropertyChanged;
+            }
+            if (e.NewValue is MainViewModel vm)
+            {
+                vm.PropertyChanged += OnVmPropertyChanged;
+                vm.Settings.PropertyChanged += OnSettingsPropertyChanged;
+                UpdateDensity();
+            }
         };
+        // Small window, small sizes: re-checked whenever the window is resized, maximised or moved to another screen.
+        SizeChanged += (_, _) => UpdateDensity();
         // Check a settings field when the user leaves it, not while they type.
         SettingsForm.AddHandler(LostKeyboardFocusEvent, new KeyboardFocusChangedEventHandler((_, args) =>
         {
@@ -61,6 +72,45 @@ public partial class MainWindow : Window
             WindowState = WindowState.Maximized;
         }
         LogExpander.IsExpanded = area.Height >= 1000;
+        UpdateDensity();
+    }
+
+    /// <summary>
+    /// Sets the window to an exact size in device-independent pixels, top left of the screen. Used by
+    /// tools/smoke-test.ps1 (--window-size 1093x576) to show what a 1366x768 screen at 125% scaling has room for.
+    /// </summary>
+    public void ForceSize(double width, double height)
+    {
+        WindowStartupLocation = WindowStartupLocation.Manual;
+        WindowState = WindowState.Normal;
+        MinWidth = Math.Min(MinWidth, width);
+        MinHeight = Math.Min(MinHeight, height);
+        Width = width;
+        Height = height;
+        Left = 0;
+        Top = 0;
+    }
+
+    /// <summary>
+    /// Picks the large or compact layout from the Size setting and, for Automatic, the window's size (before the first
+    /// layout, the size it is about to open at).
+    /// </summary>
+    private void UpdateDensity()
+    {
+        if (DataContext is not MainViewModel vm) return;
+        double width = ActualWidth > 0 ? ActualWidth : Width;
+        double height = ActualHeight > 0 ? ActualHeight : Height;
+        if (WindowState == WindowState.Maximized && ActualWidth <= 0)
+        {
+            width = SystemParameters.WorkArea.Width;
+            height = SystemParameters.WorkArea.Height;
+        }
+        Theme.SetCompact(Theme.WantsCompact(vm.Settings.Density, width, height));
+    }
+
+    private void OnSettingsPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(SettingsViewModel.Density)) UpdateDensity();
     }
 
     private void OnVmPropertyChanged(object? sender, PropertyChangedEventArgs e)

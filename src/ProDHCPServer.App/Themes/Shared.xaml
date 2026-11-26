@@ -11,12 +11,65 @@
   <FontFamily x:Key="MonoFont">Cascadia Mono, Consolas, Courier New</FontFamily>
   <FontFamily x:Key="IconFont">Segoe Fluent Icons, Segoe MDL2 Assets</FontFamily>
 
-  <!-- Five sizes: small, body, lead, head, display. Nothing below 13. -->
+  <!-- Five sizes: small, body, lead, head, display. Nothing below 13 (12 in the compact layout, Compact.xaml). -->
   <sys:Double x:Key="TextSmall">13</sys:Double>
   <sys:Double x:Key="TextBody">16</sys:Double>
   <sys:Double x:Key="TextLead">20</sys:Double>
   <sys:Double x:Key="TextHead">40</sys:Double>
   <sys:Double x:Key="TextDisplay">64</sys:Double>
+
+  <!--
+      Spacing and control sizes. These are the comfortable values for a big screen; Compact.xaml overrides them (and
+      the type scale) for small laptop screens such as 1366x768. Read them with DynamicResource so the window can switch
+      between the two while it runs.
+  -->
+  <Thickness x:Key="WindowMargin">16</Thickness>
+  <Thickness x:Key="SectionGap">0,0,0,16</Thickness>
+  <Thickness x:Key="LogPanelMargin">0,16,0,0</Thickness>
+  <GridLength x:Key="ColumnGap">16</GridLength>
+  <sys:Double x:Key="ChecksMinWidth">440</sys:Double>
+  <sys:Double x:Key="DeviceMinWidth">384</sys:Double>
+  <!-- Top bar: the pickers, round buttons and Start share one height. -->
+  <sys:Double x:Key="BarHeight">56</sys:Double>
+  <sys:Double x:Key="ProfilePickerWidth">260</sys:Double>
+  <sys:Double x:Key="StartMinWidth">200</sys:Double>
+  <Thickness x:Key="StartPadding">28,0</Thickness>
+  <!-- Status field and its giant light. -->
+  <sys:Double x:Key="StatusMinHeight">104</sys:Double>
+  <sys:Double x:Key="StatusLightSize">280</sys:Double>
+  <Thickness x:Key="StatusLightMargin">0,-400,-100,-400</Thickness>
+  <Thickness x:Key="StatusGlyphMargin">0,0,70,0</Thickness>
+  <Thickness x:Key="StatusTextMargin">32,16,232,16</Thickness>
+  <Thickness x:Key="StatusActionMargin">0,8,0,0</Thickness>
+  <sys:Double x:Key="HeadLineHeight">44</sys:Double>
+  <!-- Status check rows. -->
+  <Thickness x:Key="StepPadding">24,8</Thickness>
+  <sys:Double x:Key="StepLightSize">28</sys:Double>
+  <Thickness x:Key="StepLightMargin">0,4,16,0</Thickness>
+  <!-- Device panel. -->
+  <Thickness x:Key="DevicePanelPadding">32,24</Thickness>
+  <Thickness x:Key="DeviceSectionGap">0,32,0,0</Thickness>
+  <Thickness x:Key="DeviceBlockGap">0,24,0,0</Thickness>
+  <Thickness x:Key="DeviceIpMargin">0,16,0,0</Thickness>
+  <sys:Double x:Key="SparklineHeight">56</sys:Double>
+  <!-- Session log list. -->
+  <GridLength x:Key="LogListHeight">176</GridLength>
+  <!-- Banners, buttons and form fields. -->
+  <Thickness x:Key="BannerPadding">24,16</Thickness>
+  <sys:Double x:Key="ButtonMinHeight">40</sys:Double>
+  <Thickness x:Key="ButtonPadding">20,0</Thickness>
+  <sys:Double x:Key="IconButtonSize">48</sys:Double>
+  <sys:Double x:Key="SmallIconButtonSize">40</sys:Double>
+  <sys:Double x:Key="FooterButtonHeight">48</sys:Double>
+  <Thickness x:Key="FieldLabelMargin">0,24,0,8</Thickness>
+  <Thickness x:Key="FieldHelpMargin">0,8,0,0</Thickness>
+  <Thickness x:Key="FieldGroupGap">0,24,0,0</Thickness>
+  <Thickness x:Key="SettingsGroupMargin">0,32,0,8</Thickness>
+  <!-- Settings slide-over. -->
+  <sys:Double x:Key="SettingsWidth">448</sys:Double>
+  <Thickness x:Key="SettingsHeaderMargin">32,24,24,0</Thickness>
+  <Thickness x:Key="SettingsBodyPadding">32,0,32,24</Thickness>
+  <Thickness x:Key="SettingsFooterPadding">32,16</Thickness>
 
   <!-- Shape tokens the default templates read. A look can change these, or replace the templates outright. -->
   <SolidColorBrush x:Key="PanelBorder" Color="Transparent" />
@@ -73,7 +126,7 @@
     <Setter Property="Background" Value="{DynamicResource TopBarBg}" />
     <Setter Property="Padding" Value="{DynamicResource TopBarPadding}" />
     <Setter Property="CornerRadius" Value="{DynamicResource PanelRadius}" />
-    <Setter Property="Margin" Value="0,0,0,16" />
+    <Setter Property="Margin" Value="{DynamicResource SectionGap}" />
   </Style>
 
   <!-- Status banners: a whole field of the state's soft colour. -->
@@ -81,12 +134,12 @@
     <Setter Property="BorderBrush" Value="{DynamicResource PanelBorder}" />
     <Setter Property="BorderThickness" Value="{DynamicResource PanelBorderThickness}" />
     <Setter Property="CornerRadius" Value="{DynamicResource PanelRadius}" />
-    <Setter Property="Padding" Value="24,16" />
-    <Setter Property="Margin" Value="0,0,0,16" />
+    <Setter Property="Padding" Value="{DynamicResource BannerPadding}" />
+    <Setter Property="Margin" Value="{DynamicResource SectionGap}" />
   </Style>
 
   <Style x:Key="SectionTitle" TargetType="TextBlock">
-      <Setter Property="FontSize" Value="{StaticResource TextLead}" />
+      <Setter Property="FontSize" Value="{DynamicResource TextLead}" />
       <Setter Property="FontWeight" Value="SemiBold" />
       <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
   </Style>
@@ -102,14 +155,14 @@
   </Style>
 
   <Style x:Key="Meta" TargetType="TextBlock">
-      <Setter Property="FontSize" Value="{StaticResource TextSmall}" />
+      <Setter Property="FontSize" Value="{DynamicResource TextSmall}" />
       <Setter Property="Foreground" Value="{DynamicResource TextMuted}" />
   </Style>
 
   <!-- Raw technical detail (packets, exceptions): the one place monospace belongs. -->
   <Style x:Key="MonoBox" TargetType="TextBox">
       <Setter Property="FontFamily" Value="{StaticResource MonoFont}" />
-      <Setter Property="FontSize" Value="{StaticResource TextSmall}" />
+      <Setter Property="FontSize" Value="{DynamicResource TextSmall}" />
       <Setter Property="IsReadOnly" Value="True" />
       <Setter Property="TextWrapping" Value="Wrap" />
       <Setter Property="MaxHeight" Value="224" />
@@ -128,10 +181,10 @@
       <Setter Property="Background" Value="{DynamicResource RaisedBg}" />
       <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
       <Setter Property="FontFamily" Value="{DynamicResource TextFont}" />
-      <Setter Property="FontSize" Value="{StaticResource TextBody}" />
+      <Setter Property="FontSize" Value="{DynamicResource TextBody}" />
       <Setter Property="FontWeight" Value="Medium" />
-      <Setter Property="Padding" Value="20,0" />
-      <Setter Property="MinHeight" Value="40" />
+      <Setter Property="Padding" Value="{DynamicResource ButtonPadding}" />
+      <Setter Property="MinHeight" Value="{DynamicResource ButtonMinHeight}" />
       <Setter Property="HorizontalContentAlignment" Value="Center" />
       <Setter Property="Cursor" Value="Hand" />
       <Setter Property="FocusVisualStyle" Value="{x:Null}" />
@@ -192,8 +245,8 @@
   <Style x:Key="IconButton" TargetType="Button" BasedOn="{StaticResource PillButton}">
       <Setter Property="FontFamily" Value="{StaticResource IconFont}" />
       <Setter Property="FontWeight" Value="Normal" />
-      <Setter Property="Width" Value="48" />
-      <Setter Property="Height" Value="48" />
+      <Setter Property="Width" Value="{DynamicResource IconButtonSize}" />
+      <Setter Property="Height" Value="{DynamicResource IconButtonSize}" />
       <Setter Property="Padding" Value="0" />
   </Style>
 
@@ -227,16 +280,16 @@
 
   <Style x:Key="FieldLabel" TargetType="Label">
       <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
-      <Setter Property="FontSize" Value="{StaticResource TextBody}" />
+      <Setter Property="FontSize" Value="{DynamicResource TextBody}" />
       <Setter Property="FontWeight" Value="Medium" />
       <Setter Property="Padding" Value="0" />
-      <Setter Property="Margin" Value="0,24,0,8" />
+      <Setter Property="Margin" Value="{DynamicResource FieldLabelMargin}" />
   </Style>
 
   <Style x:Key="FieldHelp" TargetType="TextBlock">
-      <Setter Property="FontSize" Value="{StaticResource TextSmall}" />
+      <Setter Property="FontSize" Value="{DynamicResource TextSmall}" />
       <Setter Property="Foreground" Value="{DynamicResource TextSecondary}" />
       <Setter Property="TextWrapping" Value="Wrap" />
-      <Setter Property="Margin" Value="0,8,0,0" />
+      <Setter Property="Margin" Value="{DynamicResource FieldHelpMargin}" />
   </Style>
 </ResourceDictionary>

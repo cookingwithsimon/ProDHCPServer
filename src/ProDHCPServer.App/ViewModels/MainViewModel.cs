@@ -45,7 +45,7 @@ public sealed partial class MainViewModel : ObservableObject, IAsyncDisposable
         _settings = settingsStore.Load();
         _monitor = new DeviceMonitor(log);
         if (profiles.Load(_settings) is { } profileProblem) log.Add(LogSeverity.Warning, LogCategory.App, profileProblem);
-        Settings = new SettingsViewModel(profiles, _settings.ActiveProfile, _settings.Theme, Theme.Find(_settings.Look));
+        Settings = new SettingsViewModel(profiles, _settings.ActiveProfile, _settings.Theme, Theme.Find(_settings.Look), _settings.Density);
         Settings.ActiveProfileChanged += profile =>
         {
             if (_settings.ActiveProfile != profile.Name)
@@ -66,6 +66,12 @@ public sealed partial class MainViewModel : ObservableObject, IAsyncDisposable
             _settings = _settings with { Look = look.Id };
             SaveSettings();
             ApplyTheme();
+        };
+        // The window applies the size itself (Automatic depends on its size); this only remembers the choice.
+        Settings.DensityChanged += density =>
+        {
+            _settings = _settings with { Density = density };
+            SaveSettings();
         };
         Update = new UpdateViewModel(App.Version, log, () => _settings, updated =>
         {

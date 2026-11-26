@@ -52,11 +52,12 @@ public sealed partial class SettingsViewModel : ObservableObject
     private ISettingsDialogs? _dialogs;
     private bool _loading;
 
-    public SettingsViewModel(ProfileLibrary library, string? activeProfile, string theme, LookInfo look)
+    public SettingsViewModel(ProfileLibrary library, string? activeProfile, string theme, LookInfo look, string density = "Automatic")
     {
         _library = library;
         _theme = theme;
         _look = look;
+        _density = global::ProDHCPServer.App.Theme.Densities.Contains(density) ? density : "Automatic";
         ReloadList();
         var active = _library.Find(activeProfile) ?? ProfilePresets.Default;
         _selectedProfile = Profiles.First(p => p.Name == active.Name);
@@ -71,6 +72,7 @@ public sealed partial class SettingsViewModel : ObservableObject
 
     public static IReadOnlyList<string> Themes { get; } = ["System", "Dark", "Light"];
     public static IReadOnlyList<LookInfo> Looks => global::ProDHCPServer.App.Theme.Looks;
+    public static IReadOnlyList<string> Densities => global::ProDHCPServer.App.Theme.Densities;
     public static IReadOnlyList<CustomOptionFormat> Formats { get; } = Enum.GetValues<CustomOptionFormat>();
 
     public ObservableCollection<ProfileItem> Profiles { get; } = [];
@@ -83,6 +85,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     public event Action<Profile>? ActiveProfileChanged;
     public event Action<string>? ThemeChanged;
     public event Action<LookInfo>? LookChanged;
+    public event Action<string>? DensityChanged;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsPreset), nameof(CanEdit), nameof(CanDelete))]
@@ -116,6 +119,8 @@ public sealed partial class SettingsViewModel : ObservableObject
     [ObservableProperty] private bool _alwaysBroadcast;
     [ObservableProperty] private string _theme;
     [ObservableProperty] private LookInfo _look;
+    /// <summary>"Automatic", "Large" or "Compact": how big the window's text and controls are.</summary>
+    [ObservableProperty] private string _density;
     [ObservableProperty] private string _errors = "";
     /// <summary>A one-off message after import/export/delete.</summary>
     [ObservableProperty] private string _notice = "";
@@ -141,6 +146,8 @@ public sealed partial class SettingsViewModel : ObservableObject
     partial void OnThemeChanged(string value) => ThemeChanged?.Invoke(value);
 
     partial void OnLookChanged(LookInfo value) => LookChanged?.Invoke(value);
+
+    partial void OnDensityChanged(string value) => DensityChanged?.Invoke(value);
 
     partial void OnSelectedProfileChanged(ProfileItem? oldValue, ProfileItem newValue)
     {

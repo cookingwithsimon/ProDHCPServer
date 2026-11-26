@@ -8,6 +8,17 @@ $ErrorActionPreference = "Stop"
 Add-Type -AssemblyName System.Windows.Forms, System.Drawing
 New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
 $settingsDir = Join-Path $env:LOCALAPPDATA "ProDHCPServer"
+
+# Shoot at a common small field-laptop screen, 1366x768, so the compact layout is what CI checks.
+# The runner's default is 1024x768; if the resolution can't be changed the shots are still taken at that size.
+try {
+    Set-DisplayResolution -Width 1366 -Height 768 -Force -ErrorAction Stop
+    Start-Sleep -Seconds 2
+} catch {
+    Write-Host "Couldn't change the screen resolution: $($_.Exception.Message)"
+}
+$b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
+Write-Host "Screen: $($b.Width)x$($b.Height)"
 New-Item -ItemType Directory -Force -Path $settingsDir | Out-Null
 
 function Save-Screen([string] $path) {
@@ -30,10 +41,20 @@ $shots = @(
     @{ Theme = "Light"; Look = "FrutigerAero"; Name = "aero-settings-light"; Args = @("--open-settings") },
     @{ Theme = "Dark"; Look = "MetalHeart"; Name = "metal-dark"; Args = @() },
     @{ Theme = "Light"; Look = "MetalHeart"; Name = "metal-light"; Args = @() },
-    @{ Theme = "Dark"; Look = "MetalHeart"; Name = "metal-settings-dark"; Args = @("--open-settings") }
+    @{ Theme = "Dark"; Look = "MetalHeart"; Name = "metal-settings-dark"; Args = @("--open-settings") },
+    # What a 1366x768 screen at 125% Windows scaling has room for: 1093x614, less the taskbar.
+    @{ Theme = "Dark"; Look = "Faceplate"; Name = "small125-main-dark"; Args = @("--window-size", "1093x576") },
+    @{ Theme = "Light"; Look = "Faceplate"; Name = "small125-settings-light"; Args = @("--window-size", "1093x576", "--open-settings") },
+    @{ Theme = "Light"; Look = "FrutigerAero"; Name = "small125-aero-light"; Args = @("--window-size", "1093x576") },
+    @{ Theme = "Dark"; Look = "FrutigerAero"; Name = "small125-aero-settings-dark"; Args = @("--window-size", "1093x576", "--open-settings") },
+    @{ Theme = "Dark"; Look = "MetalHeart"; Name = "small125-metal-dark"; Args = @("--window-size", "1093x576") },
+    @{ Theme = "Light"; Look = "MetalHeart"; Name = "small125-metal-settings-light"; Args = @("--window-size", "1093x576", "--open-settings") },
+    # The large layout still works when someone picks it on a big screen.
+    @{ Theme = "Dark"; Look = "Faceplate"; Name = "large-main-dark"; Args = @(); Density = "Large" }
 )
 foreach ($shot in $shots) {
-    @{ Theme = $shot.Theme; Look = $shot.Look } | ConvertTo-Json | Set-Content -Path (Join-Path $settingsDir "settings.json") -Encoding utf8
+    $density = if ($shot.Density) { $shot.Density } else { "Automatic" }
+    @{ Theme = $shot.Theme; Look = $shot.Look; Density = $density } | ConvertTo-Json | Set-Content -Path (Join-Path $settingsDir "settings.json") -Encoding utf8
     if ($shot.Args.Count -gt 0) { $p = Start-Process -FilePath $Exe -ArgumentList $shot.Args -PassThru }
     else { $p = Start-Process -FilePath $Exe -PassThru }
     Start-Sleep -Seconds 15
