@@ -110,7 +110,7 @@ Each phase ends with a hardware test pass on real AV equipment before the next o
 
 | What | Where |
 |---|---|
-| Your settings (last adapter, profile in use, look and theme, update check) | `%LOCALAPPDATA%\ProDHCPServer\settings.json` |
+| Your settings (last adapter, profile in use, look, theme and size, update check) | `%LOCALAPPDATA%\ProDHCPServer\settings.json` |
 | Your profiles | `%LOCALAPPDATA%\ProDHCPServer\profiles.json` |
 | Adapter backup (only while a session runs, or after a crash) | `%ProgramData%\ProDHCPServer\adapter-backup.json` |
 | The previous version, for a moment after an update | `ProDHCPServer.exe.old` next to the exe, deleted on the next start |
