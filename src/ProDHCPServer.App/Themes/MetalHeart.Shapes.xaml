@@ -113,7 +113,7 @@
     <Setter Property="BorderThickness" Value="2" />
     <Setter Property="Padding" Value="{DynamicResource TopBarPadding}" />
     <Setter Property="CornerRadius" Value="6" />
-    <Setter Property="Margin" Value="0,0,0,16" />
+    <Setter Property="Margin" Value="{DynamicResource SectionGap}" />
   </Style>
 
   <!-- Banners get the bevel too. -->
@@ -121,7 +121,7 @@
     <Setter Property="BorderBrush" Value="{DynamicResource Bevel}" />
     <Setter Property="BorderThickness" Value="2" />
     <Setter Property="CornerRadius" Value="6" />
-    <Setter Property="Padding" Value="24,16" />
-    <Setter Property="Margin" Value="0,0,0,16" />
+    <Setter Property="Padding" Value="{DynamicResource BannerPadding}" />
+    <Setter Property="Margin" Value="{DynamicResource SectionGap}" />
   </Style>
 </ResourceDictionary>

@@ -1,0 +1,62 @@
+<!--
+    The compact layout for small screens (a 1366x768 laptop, or a 1080p one at 125% or 150% scaling). Theme merges this
+    after the look, so these values win over the comfortable ones in Shared.xaml, in every look. Same keys, smaller
+    numbers: tighter gaps, shorter controls and a smaller type scale, so all eight checks fit without scrolling.
+-->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+  <sys:Double x:Key="TextSmall">12</sys:Double>
+  <sys:Double x:Key="TextBody">14</sys:Double>
+  <sys:Double x:Key="TextLead">16</sys:Double>
+  <sys:Double x:Key="TextHead">26</sys:Double>
+  <sys:Double x:Key="TextDisplay">40</sys:Double>
+
+  <Thickness x:Key="WindowMargin">10</Thickness>
+  <Thickness x:Key="SectionGap">0,0,0,8</Thickness>
+  <Thickness x:Key="LogPanelMargin">0,8,0,0</Thickness>
+  <GridLength x:Key="ColumnGap">8</GridLength>
+  <sys:Double x:Key="ChecksMinWidth">340</sys:Double>
+  <sys:Double x:Key="DeviceMinWidth">300</sys:Double>
+
+  <sys:Double x:Key="BarHeight">40</sys:Double>
+  <sys:Double x:Key="ProfilePickerWidth">200</sys:Double>
+  <sys:Double x:Key="StartMinWidth">132</sys:Double>
+  <Thickness x:Key="StartPadding">18,0</Thickness>
+
+  <sys:Double x:Key="StatusMinHeight">64</sys:Double>
+  <sys:Double x:Key="StatusLightSize">176</sys:Double>
+  <Thickness x:Key="StatusLightMargin">0,-300,-64,-300</Thickness>
+  <Thickness x:Key="StatusGlyphMargin">0,0,43,0</Thickness>
+  <Thickness x:Key="StatusTextMargin">20,8,140,8</Thickness>
+  <Thickness x:Key="StatusActionMargin">0,2,0,0</Thickness>
+  <sys:Double x:Key="HeadLineHeight">30</sys:Double>
+
+  <Thickness x:Key="StepPadding">16,4</Thickness>
+  <sys:Double x:Key="StepLightSize">22</sys:Double>
+  <Thickness x:Key="StepLightMargin">0,2,12,0</Thickness>
+
+  <Thickness x:Key="DevicePanelPadding">20,12</Thickness>
+  <Thickness x:Key="DeviceSectionGap">0,16,0,0</Thickness>
+  <Thickness x:Key="DeviceBlockGap">0,12,0,0</Thickness>
+  <Thickness x:Key="DeviceIpMargin">0,8,0,0</Thickness>
+  <sys:Double x:Key="SparklineHeight">40</sys:Double>
+
+  <GridLength x:Key="LogListHeight">120</GridLength>
+
+  <Thickness x:Key="BannerPadding">16,8</Thickness>
+  <sys:Double x:Key="ButtonMinHeight">32</sys:Double>
+  <Thickness x:Key="ButtonPadding">14,0</Thickness>
+  <sys:Double x:Key="IconButtonSize">36</sys:Double>
+  <sys:Double x:Key="SmallIconButtonSize">32</sys:Double>
+  <sys:Double x:Key="FooterButtonHeight">36</sys:Double>
+  <Thickness x:Key="FieldLabelMargin">0,14,0,4</Thickness>
+  <Thickness x:Key="FieldHelpMargin">0,4,0,0</Thickness>
+  <Thickness x:Key="FieldGroupGap">0,14,0,0</Thickness>
+  <Thickness x:Key="SettingsGroupMargin">0,20,0,4</Thickness>
+
+  <sys:Double x:Key="SettingsWidth">400</sys:Double>
+  <Thickness x:Key="SettingsHeaderMargin">20,12,16,0</Thickness>
+  <Thickness x:Key="SettingsBodyPadding">20,0,20,16</Thickness>
+  <Thickness x:Key="SettingsFooterPadding">20,10</Thickness>
+</ResourceDictionary>

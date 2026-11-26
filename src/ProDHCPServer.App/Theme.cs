@@ -62,6 +62,48 @@ public static class Theme
         if (_current is not null) merged.Remove(_current);
         merged.Add(next);
         _current = next;
+        // The compact sizes must stay after the look so they keep winning over the look's comfortable ones.
+        if (_compact is not null)
+        {
+            merged.Remove(_compact);
+            merged.Add(_compact);
+        }
+    }
+
+    /// <summary>The size choices in Settings. Automatic picks compact when the window is small, see <see cref="WantsCompact"/>.</summary>
+    public static IReadOnlyList<string> Densities { get; } = ["Automatic", "Large", "Compact"];
+
+    public static bool IsCompact => _compact is not null;
+
+    private static ResourceDictionary? _compact;
+
+    /// <summary>
+    /// Whether a window of this size (in device-independent pixels, so Windows scaling is already taken into account)
+    /// should use the compact layout. The large layout is drawn for 1320x860; anything noticeably smaller, such as a
+    /// 1366x768 laptop (about 1366x728 maximised, or 1093x576 at 125% scaling), gets the compact one.
+    /// </summary>
+    public static bool WantsCompact(string? density, double width, double height) => density switch
+    {
+        "Compact" => true,
+        "Large" => false,
+        _ => width < 1240 || height < 840,
+    };
+
+    /// <summary>Switches between the large sizes in Shared.xaml and the compact ones in Compact.xaml.</summary>
+    public static void SetCompact(bool compact)
+    {
+        if (compact == IsCompact) return;
+        var merged = Application.Current.Resources.MergedDictionaries;
+        if (_compact is not null)
+        {
+            merged.Remove(_compact);
+            _compact = null;
+        }
+        else
+        {
+            _compact = new ResourceDictionary { Source = new Uri("pack://application:,,,/Themes/Compact.xaml") };
+            merged.Add(_compact);
+        }
     }
 
     private static bool SystemPrefersDark()

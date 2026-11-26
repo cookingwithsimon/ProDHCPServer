@@ -81,6 +81,22 @@ public partial class App : Application
         window.Closed += (_, _) => Shutdown();
         MainWindow = window;
         window.Show();
+        // Used by tools/smoke-test.ps1 to see the window at a small laptop's size, e.g. --window-size 1093x576.
+        if (WindowSizeArgument(e.Args) is var (w, h)) window.ForceSize(w, h);
+    }
+
+    /// <summary>Reads "--window-size WIDTHxHEIGHT" from the command line, if it's there and makes sense.</summary>
+    private static (double Width, double Height)? WindowSizeArgument(string[] args)
+    {
+        int i = Array.IndexOf(args, "--window-size");
+        if (i < 0 || i + 1 >= args.Length) return null;
+        var parts = args[i + 1].Split('x', 'X');
+        return parts.Length == 2
+            && double.TryParse(parts[0], System.Globalization.CultureInfo.InvariantCulture, out var w)
+            && double.TryParse(parts[1], System.Globalization.CultureInfo.InvariantCulture, out var h)
+            && w >= 400 && h >= 300
+            ? (w, h)
+            : null;
     }
 
     private const string SingleInstanceName = @"Global\ProDHCPServer.SingleInstance";
